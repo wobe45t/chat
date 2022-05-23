@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo
+    container_name: chat-mongodb
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ~/mongodb/chat-db:/data/db
+    ports:
+      - 27015:27017
+    restart: unless-stopped
