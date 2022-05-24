@@ -19,19 +19,18 @@ const Login = () => {
   } = useForm<Credentials>()
 
   const { setUser } = useContext(UserContext)
-  const {initSocket} = useContext(SocketContext)
+  const { initSocket } = useContext(SocketContext)
 
   const { mutate: loginMutate } = useMutation(
     (loginData: Credentials) => login(loginData),
     {
       onSuccess: (data) => {
         console.log('login data: ', data)
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify({ email: data.email }))
-
-        initSocket(data.token)
-
+        const token = data.token
         delete data.token
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(data))
+        initSocket(token)
         setUser(data)
         toast.success('Logged in', {
           autoClose: 500,

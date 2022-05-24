@@ -1,26 +1,57 @@
 import { useContext } from 'react'
 import { UserContext } from '../context/userContext'
 import { useSocket } from '../context/socketContext'
+import { useMutation } from 'react-query'
+import {
+  acceptFriendInvitation,
+  declineFriendInvitation,
+} from '../actions/friends'
 
 const Notifications = () => {
-  const { user } = useContext(UserContext)
+  const { user, setUser } = useContext(UserContext)
   const socket = useSocket()
 
+  const { mutate: acceptFriendInvitationMutate } = useMutation(
+    (userId: string) => acceptFriendInvitation(userId),
+    {
+      onSuccess: (data) => {
+        setUser(data)
+        console.log('accept inv success: ', data)
+      },
+      onError: (error) => {
+        console.log('accept inv error: ', error)
+      },
+    }
+  )
+
+  const { mutate: declineFriendInvitationMutate } = useMutation(
+    (userId: string) => declineFriendInvitation(userId),
+    {
+      onSuccess: (data) => {
+        setUser(data)
+      },
+      onError: (error) => {
+        console.log('decline inv error: ', error)
+      },
+    }
+  )
   return (
     <div className='container mx-auto'>
       <div className='text-xl font-light'>Notifications</div>
       <div className='flex flex-col gap-2'>
-        {user.friendRequests?.map((request: any, index: number) => (
+        {user.friendRequests?.map((user: any, index: number) => (
           <div
             key={index}
             className='flex flex-row justify-between border rouned-md px-3 py-2'
           >
-            <div>Request: {JSON.stringify(request)}</div>
+            <div>
+              {user.firstName} {user.lastName} invited you!
+            </div>
             <div className='flex flex-row gap-2'>
               <div
                 className='cursor-pointer font-light tracking-tight hover:text-green-700'
                 onClick={() => {
-                  socket?.emit('accept-friend-request', { from: request })
+                  acceptFriendInvitationMutate(user._id)
                 }}
               >
                 Accept
@@ -28,7 +59,7 @@ const Notifications = () => {
               <div
                 className='cursor-pointer font-light tracking-tight hover:text-red-700'
                 onClick={() => {
-                  socket?.emit('decline-friend-request', { from: request })
+                  declineFriendInvitationMutate(user._id)
                 }}
               >
                 Decline

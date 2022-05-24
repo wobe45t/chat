@@ -48,21 +48,12 @@ const Nav = () => {
     }
   )
 
-  useEffect(() => {
-    users?.forEach((user: any) => {
-      console.log(
-        `userEmail: ${user.email}\nuserId: ${user.id}\nchat-userId:${chat.userId}`
-      )
-      if (user.id === chat.userId) {
-        setChat((prev: any) => ({ ...prev, chatId: user.chatId }))
-      }
-    })
-  }, [users])
-
   return (
     <div className='p-2 flex flex-col h-full gap-2 bg-gray-50'>
       <div className='text-xl font-light tracking-tight'>
-        <div>{user?.email ?? 'No email'}</div>
+        <div>
+          {user.firstName} {user.lastName}
+        </div>
         <div className='tracking-tight font-light text-xs'>
           ChatID: {user?.chatId ?? 'No id'}
         </div>
@@ -135,20 +126,59 @@ const Nav = () => {
                 key={index}
                 className='flex flex-row items-center gap-3 font-light text-lg tracking-tighter'
                 onClick={() => {
-                  console.log(`select user:${user.id}, chat:${user.chatId}`)
+                  console.log(
+                    `select user:${JSON.stringify(user)}, chat:${user.chatId}`
+                  )
                   getMessagesMutate(user.id)
-                  setChat({ userId: user.id, chatId: user.chatId })
+                  setChat({
+                    user,
+                    chatId: user.chatId,
+                  })
                 }}
               >
-                <div className='rounded-full p-2 w-7 h-7 bg-cyan-200 block'></div>
-                <span>{user.email}</span>
+                <div className='flex flex-row items-center justify-around gap-1'>
+                  <div className='bg-green-500 rounded-full w-3 h-3' />
+                  <div className='ml-1 flex flex-col'>
+                    <div>
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className='text-xs tracking-tight font-light text-gray-500'>
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
               </div>
             ))
           )
         ) : (
           <div>
-            {user.friends?.map((friend: any) => (
-              <div>{JSON.stringify(friend)}</div>
+            {user.friends?.map((user: any, index: any) => (
+              <div
+                key={index}
+                className='flex flex-row items-center gap-3 font-light text-lg tracking-tighter'
+                onClick={() => {
+                  console.log(
+                    `select user:${JSON.stringify(user)}, chat:${user.chatId}`
+                  )
+                  getMessagesMutate(user._id)
+                  setChat({
+                    user: { ...user, id: user._id },
+                    chatId: user.chatId,
+                  })
+                }}
+              >
+                <div className='flex flex-row items-center justify-around gap-1'>
+                  <div className='bg-green-500 rounded-full w-3 h-3' />
+                  <div className='ml-1 flex flex-col'>
+                    <div>
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className='text-xs tracking-tight font-light text-gray-500'>
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -156,5 +186,4 @@ const Nav = () => {
     </div>
   )
 }
-
 export default Nav

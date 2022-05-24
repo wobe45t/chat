@@ -1,7 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { IProfile } from '../interfaces/user'
+import { createContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import io, { Socket } from 'socket.io-client'
 import {IUser} from '../interfaces/user'
 
 export const UserContext = createContext<{

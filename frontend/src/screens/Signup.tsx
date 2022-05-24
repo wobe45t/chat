@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { useForm } from 'react-hook-form'
 import { InputField } from '../components/InputField'
-import { Credentials } from '../interfaces/user'
+import { ISignupForm } from '../interfaces/user'
 import { SubmitButton } from '../components/SubmitButton'
 import { signup } from '../actions/users'
 import { UserContext } from '../context/userContext'
 import { useMutation } from 'react-query'
+
 
 const Signup = () => {
   const navigate = useNavigate()
@@ -16,10 +17,10 @@ const Signup = () => {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<Credentials>()
+  } = useForm<ISignupForm>()
 
   const { mutate: signupMutate } = useMutation(
-    (signupData: Credentials) => signup(signupData),
+    (signupData: ISignupForm) => signup(signupData),
     {
       onSuccess: (data) => {
         toast.success('Account created', {
@@ -66,6 +67,19 @@ const Signup = () => {
               {...register('password', { required: 'Field is required' })}
               error={errors?.password}
             />
+
+            <InputField
+              label='First name'
+              {...register('firstName')}
+              error={errors?.firstName}
+            />
+
+            <InputField
+              label='Last name'
+              {...register('lastName')}
+              error={errors?.lastName}
+            />
+
             <SubmitButton>Signup</SubmitButton>
           </form>
         </div>

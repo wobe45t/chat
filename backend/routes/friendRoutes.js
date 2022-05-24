@@ -1,15 +1,14 @@
 const express = require('express')
 const router = express.Router()
-// const {
-//   registerUser,
-//   loginUser,
-//   updateProfile,
-// } = require('../controllers/userController')
-// const { protect } = require('../middleware/authMiddleware')
+const {
+  addFriendInvitation,
+  acceptFriendInvitation,
+  declineFriendInvitation
+} = require('../controllers/friendController')
+const { protect } = require('../middleware/authMiddleware')
 
-router.get('/friends', getFriends)
-router.post('/friends', )
-router.route('/profile')
-  .put(protect, updateProfile)
+router.route('/invite/:id').post(protect, addFriendInvitation)
+router.route('/accept/:id').post(protect, acceptFriendInvitation)
+router.route('/decline/:id').post(protect, acceptFriendInvitation)
 
 module.exports = router

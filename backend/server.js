@@ -13,11 +13,13 @@ const jwt = require('jsonwebtoken')
 const User = require('./models/userModel')
 const Message = require('./models/messageModel')
 
+
 connectDb()
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
+app.use('/api/friends', require('./routes/friendRoutes'))
 app.use('/api/messages', require('./routes/messagesRoutes'))
 app.use('/api/users', require('./routes/userRoutes'))
 
@@ -27,6 +29,8 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
   },
 })
+app.set("socketio", io)
+
 io.of('/ws').use(async (socket, next) => {
   if (socket.handshake.query && socket.handshake.query.token) {
     jwt.verify(
@@ -34,7 +38,7 @@ io.of('/ws').use(async (socket, next) => {
       process.env.JWT_SECRET,
       async function (err, decoded) {
         if (err) return next(new Error('Authentication error'))
-        const user = await User.findById(decoded.id).select('-password')
+        const user = await User.findById(decoded.id).select('-password -friends -friendRequests')
         if (user) {
           socket.user = user.toClient()
           next()
@@ -56,6 +60,7 @@ io.of('/ws').on('connection', (socket) => {
       active: true,
     })
   }
+
   socket.emit('connected', { chatId: socket.id })
   io.of('/ws').emit('users', users)
 
@@ -72,10 +77,8 @@ io.of('/ws').on('connection', (socket) => {
 
   socket.on('add-friend', async (data) => {
     console.log('add-friend: ', data)
-    const find = await User.find({
-      $or: [{ friendRequests: data.from }, { friends: data.from }],
-    })
-    if (!find) {
+    const find = await User.find({ $or: [{friendRequests: data.from }, {friends: data.from}]})
+    if (find.length === 0) {
       await User.findByIdAndUpdate(data.to, {
         $push: { friendRequests: data.from },
       })

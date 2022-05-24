@@ -1,6 +1,5 @@
 import axios from 'axios'
-import { Credentials } from '../interfaces/user'
-import { IProfile } from '../interfaces/user'
+import { Credentials, ISignupForm } from '../interfaces/user'
 
 export const login = (userData: Credentials) => {
   return axios.post('/api/users/login', userData).then((response) => {
@@ -10,7 +9,7 @@ export const login = (userData: Credentials) => {
   })
 }
 
-export const signup = (userData: Credentials) => {
+export const signup = (userData: ISignupForm) => {
   return axios.post('/api/users', userData).then((response) => response.data)
 }
 
@@ -18,14 +17,14 @@ export const getStorageUser = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 }
 
-export const updateProfile = (profileData: IProfile) => {
-  const token = localStorage.getItem('token')?.replaceAll('"', '')
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-  return axios
-    .put(`/api/users/profile`, {profile: profileData}, config)
-    .then((response) => response.data)
-}
+// export const updateProfile = (profileData: IProfile) => {
+//   const token = localStorage.getItem('token')?.replaceAll('"', '')
+//   const config = {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   }
+//   return axios
+//     .put(`/api/users/profile`, {profile: profileData}, config)
+//     .then((response) => response.data)
+// }

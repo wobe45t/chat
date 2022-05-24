@@ -38,6 +38,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // Create user
   const user = await User.create({
+    ...req.body,
     email,
     password: hashedPassword,
   })
@@ -61,12 +62,23 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body
 
   // Check for user email
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email }).populate([
+    {
+      path: 'friends',
+      select: '-password -friends -friendRequests',
+    },
+    {
+      path: 'friendRequests',
+      select: '-password -friends -friendRequests',
+    },
+  ])
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.json({
-      _id: user.id,
+      id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       friends: user.friends,
       friendRequests: user.friendRequests,
       token: generateToken(user._id),

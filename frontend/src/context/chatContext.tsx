@@ -1,7 +1,7 @@
 import { createContext, useState } from 'react'
 
 interface IChat {
-  userId: string
+  user: { id: string; firstName: string; lastName: string } | null
   chatId: string
 }
 interface IContext {
@@ -17,7 +17,7 @@ interface IContext {
 
 export const ChatContext = createContext<IContext>({
   chat: {
-    userId: '',
+    user: null,
     chatId: '',
   },
   setChat: Function,
@@ -26,7 +26,7 @@ export const ChatContext = createContext<IContext>({
   addMessages: Function,
   appendMessage: Function,
   messages: {},
-  reset: Function
+  reset: Function,
 })
 
 interface Props {
@@ -35,12 +35,12 @@ interface Props {
 
 export const ChatProvider = (props: Props) => {
   const { children } = props
-  const [chat, setChat] = useState<IChat>({ chatId: '', userId: '' })
+  const [chat, setChat] = useState<IChat>({ chatId: '', user: null })
   const [users, setUsers] = useState<any[]>([])
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({})
 
   const reset = () => {
-    setChat({chatId: '', userId: ''})
+    setChat({ chatId: '', user: null })
     setUsers([])
     setMessages({})
   }
@@ -71,7 +71,7 @@ export const ChatProvider = (props: Props) => {
         addMessages,
         appendMessage,
         messages,
-        reset
+        reset,
       }}
     >
       {children}

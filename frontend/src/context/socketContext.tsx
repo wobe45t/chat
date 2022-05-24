@@ -24,7 +24,7 @@ export const SocketProvider = (props: Props) => {
   const { children } = props
   const [socket, setSocket] = useState<Socket | null>(null)
   const [socketInitialized, setSocketInitialized] = useState<boolean>(false)
-  const { users, setUsers, appendMessage } = useContext(ChatContext)
+  const { chat, setChat, setUsers, appendMessage } = useContext(ChatContext)
   const { user, setUser } = useContext(UserContext)
 
   const reset = () => {
@@ -44,6 +44,16 @@ export const SocketProvider = (props: Props) => {
 
     newSocket.off('users').on('users', (data: any[]) => {
       setUsers(data.filter((u: any) => u.email !== user.email))
+
+      // console.log(
+      //   `userEmail: ${user.email}\nuserId: ${user.id}\nchat-userId:${chat.user?.id}`
+      // )
+      data.forEach((user: any) => {
+        if (user.id === chat.user?.id) {
+          setChat((prev: any) => ({ ...prev, chatId: user.chatId }))
+        }
+      })
+
     })
 
     newSocket.off('user').on('user', (data: any) => {
@@ -57,11 +67,11 @@ export const SocketProvider = (props: Props) => {
 
     newSocket.off('friend-request').on('friend-request', (data: any) => {
       console.log('friend-request: ', data)
-      if (user.friendRequests?.includes(data.from)) return //TODO replace it with backend DB check
-      setUser((prev: IUser) => ({
-        ...prev,
-        friendRequests: [...(prev.friendRequests ?? []), data.from],
-      }))
+      // if (user.friendRequests?.includes(data.from)) return //TODO replace it with backend DB check
+      // setUser((prev: IUser) => ({
+      //   ...prev,
+      //   friendRequests: [...(prev.friendRequests ?? []), data.from],
+      // }))
     })
 
     newSocket.off('connected').on('connected', (data: any) => {
