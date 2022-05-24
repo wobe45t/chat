@@ -28,10 +28,10 @@ const Login = () => {
         console.log('login data: ', data)
         const token = data.token
         delete data.token
+        setUser(data)
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(data))
         initSocket(token)
-        setUser(data)
         toast.success('Logged in', {
           autoClose: 500,
           hideProgressBar: true,

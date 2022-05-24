@@ -31,8 +31,8 @@ const Nav = () => {
 
   const {
     users,
-    chat,
-    setChat,
+    chatUser,
+    setChatUser,
     addMessages,
     reset: resetChat,
   } = useContext(ChatContext)
@@ -53,9 +53,6 @@ const Nav = () => {
       <div className='text-xl font-light tracking-tight'>
         <div>
           {user.firstName} {user.lastName}
-        </div>
-        <div className='tracking-tight font-light text-xs'>
-          ChatID: {user?.chatId ?? 'No id'}
         </div>
       </div>
       <div
@@ -126,18 +123,13 @@ const Nav = () => {
                 key={index}
                 className='flex flex-row items-center gap-3 font-light text-lg tracking-tighter'
                 onClick={() => {
-                  console.log(
-                    `select user:${JSON.stringify(user)}, chat:${user.chatId}`
-                  )
-                  getMessagesMutate(user.id)
-                  setChat({
-                    user,
-                    chatId: user.chatId,
-                  })
+                  console.log(`select user:${JSON.stringify(user)}`)
+                  getMessagesMutate(user._id)
+                  setChatUser(user)
                 }}
               >
                 <div className='flex flex-row items-center justify-around gap-1'>
-                  <div className='bg-green-500 rounded-full w-3 h-3' />
+                  {/* <div className='bg-green-500 rounded-full w-3 h-3' /> */}
                   <div className='ml-1 flex flex-col'>
                     <div>
                       {user.firstName} {user.lastName}
@@ -157,18 +149,17 @@ const Nav = () => {
                 key={index}
                 className='flex flex-row items-center gap-3 font-light text-lg tracking-tighter'
                 onClick={() => {
-                  console.log(
-                    `select user:${JSON.stringify(user)}, chat:${user.chatId}`
-                  )
+                  console.log(`select user:${JSON.stringify(user)}`)
                   getMessagesMutate(user._id)
-                  setChat({
-                    user: { ...user, id: user._id },
-                    chatId: user.chatId,
-                  })
+                  setChatUser(user)
                 }}
               >
                 <div className='flex flex-row items-center justify-around gap-1'>
-                  <div className='bg-green-500 rounded-full w-3 h-3' />
+                  <div
+                    className={`${
+                      user.active ? 'bg-green-500' : 'bg-red-500'
+                    } rounded-full w-3 h-3`}
+                  />
                   <div className='ml-1 flex flex-col'>
                     <div>
                       {user.firstName} {user.lastName}

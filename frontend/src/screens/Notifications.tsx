@@ -2,10 +2,12 @@ import { useContext } from 'react'
 import { UserContext } from '../context/userContext'
 import { useSocket } from '../context/socketContext'
 import { useMutation } from 'react-query'
+import { IUser } from '../interfaces/user'
 import {
   acceptFriendInvitation,
   declineFriendInvitation,
 } from '../actions/friends'
+import { toast } from 'react-toastify'
 
 const Notifications = () => {
   const { user, setUser } = useContext(UserContext)
@@ -15,10 +17,12 @@ const Notifications = () => {
     (userId: string) => acceptFriendInvitation(userId),
     {
       onSuccess: (data) => {
-        setUser(data)
+        toast.success('Invitation accepted', { autoClose: 500 })
         console.log('accept inv success: ', data)
+        setUser((prev: IUser) => ({ ...prev, ...data }))
       },
       onError: (error) => {
+        toast.error('Couldnt accept invitation', { autoClose: 500 })
         console.log('accept inv error: ', error)
       },
     }
@@ -28,10 +32,11 @@ const Notifications = () => {
     (userId: string) => declineFriendInvitation(userId),
     {
       onSuccess: (data) => {
-        setUser(data)
+        toast.success('Invitation declined', { autoClose: 500 })
+        setUser((prev: IUser) => ({ ...prev, ...data }))
       },
       onError: (error) => {
-        console.log('decline inv error: ', error)
+        toast.error('Couldnt decline invitation', { autoClose: 500 })
       },
     }
   )

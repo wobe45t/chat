@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const { findUserSocket } = require('../utils/findUserSocket')
 const User = require('../models/userModel')
+const { isObjectIdOrHexString } = require('mongoose')
 
 const addFriendInvitation = asyncHandler(async (req, res) => {
   console.log('search for ', req.params.id)
@@ -18,14 +19,29 @@ const addFriendInvitation = asyncHandler(async (req, res) => {
   const io = req.app.get('socketio')
 
   if (users.length === 0) {
-    await User.findByIdAndUpdate(req.params.id, {
-      $push: { friendRequests: req.user.id },
-    })
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { friendRequests: req.user.id },
+      },
+      { new: true }
+    )
+      .populate([
+        {
+          path: 'friends',
+          select: '-password -friends -friendRequests',
+        },
+        {
+          path: 'friendRequests',
+          select: '-password -friends -friendRequests',
+        },
+      ])
+      .select('-password')
+
     const socket = findUserSocket(io.of('/ws').sockets, req.params.id)
     console.log('socket: ', socket)
     if (socket) {
-      io.to(socket).emit('friend-request', { from: req.user.id })
-      console.log('message emitted')
+      io.of('/ws').to(socket).emit('friend-request', { user })
     }
     res.status(200)
     return
@@ -37,7 +53,7 @@ const addFriendInvitation = asyncHandler(async (req, res) => {
 
 const acceptFriendInvitation = asyncHandler(async (req, res) => {
   const io = req.app.get('socketio')
-  const user = await User.findByIdAndUpdate(
+  const userInvited = await User.findByIdAndUpdate(
     req.user.id,
     {
       $pull: { friendRequests: req.params.id },
@@ -57,14 +73,37 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
     ])
     .select('-password')
 
-  const socket = findUserSocket(io.of('/ws').sockets, req.params.id)
+  const userInviting = await User.findByIdAndUpdate(
+    req.params.id,
+    {
+      $push: { friends: req.user.id },
+    },
+    { new: true }
+  )
+    .populate([
+      {
+        path: 'friends',
+        select: '-password -friends -friendRequests',
+      },
+      {
+        path: 'friendRequests',
+        select: '-password -friends -friendRequests',
+      },
+    ])
+    .select('-password')
 
-  console.log('socket: ', socket)
+  // const socketInvited = findUserSocket(io.of('/ws').sockets, req.user.id)
+  // if (socketInvited) {
+  //   io.of('/ws').to(socketInvited).emit('friend-request', { user: userInvited })
+  // }
 
-  if (socket) {
-    io.to(socket).emit('friend-request', { message: 'Request accepted' })
+  const socketInviting = findUserSocket(io.of('/ws').sockets, req.params.id)
+  if (socketInviting) {
+    io.of('/ws')
+      .to(socketInviting)
+      .emit('friend-request', { user: userInviting })
   }
-  res.status(200).json(user.toClient())
+  res.status(200).json(userInvited.toClient())
 })
 
 const declineFriendInvitation = asyncHandler(async (req, res) => {
@@ -92,5 +131,5 @@ const declineFriendInvitation = asyncHandler(async (req, res) => {
 module.exports = {
   addFriendInvitation,
   acceptFriendInvitation,
-  declineFriendInvitation
+  declineFriendInvitation,
 }

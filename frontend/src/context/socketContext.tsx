@@ -3,6 +3,7 @@ import { UserContext } from './userContext'
 import { ChatContext } from './chatContext'
 import io, { Socket } from 'socket.io-client'
 import { IUser } from '../interfaces/user'
+import { isConstructorDeclaration } from 'typescript'
 
 export const SocketContext = createContext<{
   socket: Socket | null
@@ -24,7 +25,8 @@ export const SocketProvider = (props: Props) => {
   const { children } = props
   const [socket, setSocket] = useState<Socket | null>(null)
   const [socketInitialized, setSocketInitialized] = useState<boolean>(false)
-  const { chat, setChat, setUsers, appendMessage } = useContext(ChatContext)
+  const { chatUser, setChatUser, setUsers, appendMessage } =
+    useContext(ChatContext)
   const { user, setUser } = useContext(UserContext)
 
   const reset = () => {
@@ -42,20 +44,6 @@ export const SocketProvider = (props: Props) => {
     setSocketInitialized(true)
     setSocket(newSocket)
 
-    newSocket.off('users').on('users', (data: any[]) => {
-      setUsers(data.filter((u: any) => u.email !== user.email))
-
-      // console.log(
-      //   `userEmail: ${user.email}\nuserId: ${user.id}\nchat-userId:${chat.user?.id}`
-      // )
-      data.forEach((user: any) => {
-        if (user.id === chat.user?.id) {
-          setChat((prev: any) => ({ ...prev, chatId: user.chatId }))
-        }
-      })
-
-    })
-
     newSocket.off('user').on('user', (data: any) => {
       console.log('user: ', data)
     })
@@ -65,22 +53,62 @@ export const SocketProvider = (props: Props) => {
       appendMessage(data.from, data)
     })
 
+    newSocket.off('friend-connect').on('friend-connect', (data: any) => {
+      setChatUser((prev: any) => {
+        if (prev === null) return prev
+        if (prev._id === data._id) {
+          return { ...prev, active: true }
+        }
+        return prev
+      })
+
+      const friends = user.friends?.map((user: any) => {
+        if (user._id === data._id) {
+          return { ...user, active: true }
+        }
+        return user
+      })
+      setUser((prev: IUser) => ({ ...prev, friends: friends }))
+    })
+    newSocket.off('friend-disconnect').on('friend-disconnect', (data: any) => {
+      setChatUser((prev: any) => {
+        if (prev === null) return prev
+        if (prev._id === data._id) {
+          return { ...prev, active: false }
+        }
+        return prev
+      })
+      const friends = user.friends?.map((user: any) => {
+        if (user._id === data._id) {
+          return { ...user, active: false }
+        }
+        return user
+      })
+      setUser((prev: IUser) => ({ ...prev, friends: friends }))
+    })
+
+    newSocket.off('active-friends').on('active-friends', (data: any[]) => {
+      console.log('active-friends: ', data)
+      console.log('user before: ', user)
+      console.log('friends before: ', user.friends)
+      const friends = user.friends?.map((user: any) => ({
+        ...user,
+        active: data.includes(user._id),
+      }))
+      setUser((prev: IUser) => ({ ...prev, friends: friends }))
+      console.log('friends set to :', friends)
+    })
+
     newSocket.off('friend-request').on('friend-request', (data: any) => {
       console.log('friend-request: ', data)
-      // if (user.friendRequests?.includes(data.from)) return //TODO replace it with backend DB check
-      // setUser((prev: IUser) => ({
-      //   ...prev,
-      //   friendRequests: [...(prev.friendRequests ?? []), data.from],
-      // }))
+      setUser((prev: IUser) => ({ ...prev, ...data.user }))
     })
-
-    newSocket.off('connected').on('connected', (data: any) => {
-      console.log('connected : ', data)
-      setUser((prev: any) => ({ ...prev, chatId: data.chatId }))
-    })
-
-    console.log('socket set')
   }
+
+  useEffect(() => {
+    //? Without it chat active status wont refresh ?
+    console.log('chatUser changed: ', chatUser)
+  }, [chatUser])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -98,6 +126,7 @@ export const SocketProvider = (props: Props) => {
   useEffect(() => {
     if (socket?.connected) {
       console.log('socket connected: ', socket.connected)
+      socket?.emit('login', true)
     }
   }, [socket?.connected])
 

@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const { getMessages } = require('../controllers/messageController')
+const { getMessages, addMessage } = require('../controllers/messageController')
 const { protect } = require('../middleware/authMiddleware')
 
-router.route('/:id').get(protect, getMessages)
+router.route('/:id').get(protect, getMessages).post(protect, addMessage)
 
 module.exports = router

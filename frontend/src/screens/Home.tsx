@@ -11,10 +11,11 @@ import {
 import { useMutation } from 'react-query'
 import { inviteFriend } from '../actions/friends'
 import { toast } from 'react-toastify'
+import { addMessage } from '../actions/messages'
 
 const Home = () => {
   const socket = useSocket()
-  const { chat, messages, appendMessage } = useContext(ChatContext)
+  const { chatUser, messages, appendMessage } = useContext(ChatContext)
   const { user } = useContext(UserContext)
   const [value, setValue] = useState('')
 
@@ -30,27 +31,24 @@ const Home = () => {
       },
     }
   )
+  const { mutate: addMessageMutate } = useMutation(
+    (args: { user_id: string; text: string }) =>
+      addMessage(args.user_id, args.text),
+    {
+      onSuccess: (data) => {
+        console.log('message add success: ', data)
+        appendMessage(data.to, data)
+      },
+      onError: (error) => {
+        console.error('message add error')
+      },
+    }
+  )
 
   const submitForm = (e: any) => {
     e.preventDefault()
-    const message = {
-      chatId: chat.chatId,
-      text: value,
-      to: chat.user?.id,
-    }
-
-    socket?.emit('message', message)
-    appendMessage(chat.user?.id, {
-      from: user.id,
-      to: chat.user?.id,
-      text: value,
-    })
+    addMessageMutate({ user_id: chatUser?._id!, text: value })
     setValue('')
-  }
-
-  const logMessages = () => {
-    console.log('ID:', chat.user?.id)
-    chat.user?.id && console.table(messages[chat.user?.id])
   }
 
   return (
@@ -61,23 +59,28 @@ const Home = () => {
         </div>
         <div className='w-full flex flex-col'>
           <div className='flex flex-col flex-grow overflow-y-auto'>
-            {chat.chatId ? (
+            {chatUser?._id ? (
               <>
                 <div className='p-2 flex flex-col items-center border-b-2'>
                   <div className='tracking-normal text-xl font-light'>
-                    {chat.user?.firstName} {chat.user?.lastName}
+                    {chatUser?.firstName} {chatUser?.lastName}
                   </div>
-                  <div className='flex flex-row items-center gap-1 font-light tracking-tight text-xs'>
-                    <div className='bg-green-500 rounded-full w-3 h-3' />
-                    <span>Active now</span>
-                  </div>
+                  {chatUser?.active ? (
+                    <div className='flex flex-row items-center gap-1 font-light tracking-tight text-xs'>
+                      <div className='bg-green-500 rounded-full w-3 h-3' />
+                      <span>Active now</span>
+                    </div>
+                  ) : (
+                    <div>Last acive ...</div>
+                  )}
                 </div>
                 <div className='p-3 flex flex-row justify-between items-center  bg-gray-100 border-b-2'>
                   <div className='flex flex-col gap-2 font-light text-xs'>
-                    <div>UserId: {chat.user?.id}</div>
-                    <div>ChatId: {chat.chatId}</div>
+                    <div>UserId: {chatUser?._id}</div>
                   </div>
-                  {user.friends?.includes(chat.user?.id) ? (
+                  {user.friends
+                    ?.map((friend: any) => friend._id)
+                    .includes(chatUser?._id) ? (
                     <div className='flex flex-col items-center gap-1'>
                       <div className='font-light text-xs'>
                         Friend since date{' '}
@@ -87,12 +90,7 @@ const Home = () => {
                   ) : (
                     <button
                       onClick={() => {
-                        // socket?.emit('add-friend', {
-                        //   chatId: chat.chatId,
-                        //   from: user.id,
-                        //   to: chat.user?.id,
-                        // })
-                        inviteFriendMutate(chat.user?.id!)
+                        inviteFriendMutate(chatUser?._id!)
                       }}
                       className='border px-2 py-1 flex flex-row gap-1 items-center transition duration-150 hover:bg-gray-200'
                     >
@@ -104,13 +102,13 @@ const Home = () => {
 
                 <div className='overflow-y-auto'>
                   <div className='flex flex-col p-3 gap-1 justify-starts'>
-                    {chat.user?.id &&
-                      messages[chat.user.id]?.map(
+                    {chatUser?._id &&
+                      messages[chatUser._id]?.map(
                         (message: any, index: number, arr: any[]) => (
                           <div
                             key={index}
                             className={`font-light tracking-tight rounded-lg px-2 py-1 w-1/3 ${
-                              message.from === chat.user?.id
+                              message.from === chatUser?._id
                                 ? 'self-start bg-gray-100'
                                 : 'self-end bg-blue-500 text-white'
                             } 

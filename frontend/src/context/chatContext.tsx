@@ -1,12 +1,14 @@
 import { createContext, useState } from 'react'
 
 interface IChat {
-  user: { id: string; firstName: string; lastName: string } | null
-  chatId: string
+  _id: string
+  firstName: string
+  lastName: string
+  active: boolean
 }
 interface IContext {
-  chat: IChat
-  setChat: Function
+  chatUser: IChat | null
+  setChatUser: Function
   users: any[]
   setUsers: Function
   addMessages: Function
@@ -16,11 +18,8 @@ interface IContext {
 }
 
 export const ChatContext = createContext<IContext>({
-  chat: {
-    user: null,
-    chatId: '',
-  },
-  setChat: Function,
+  chatUser: null,
+  setChatUser: Function,
   users: [],
   setUsers: Function,
   addMessages: Function,
@@ -35,20 +34,18 @@ interface Props {
 
 export const ChatProvider = (props: Props) => {
   const { children } = props
-  const [chat, setChat] = useState<IChat>({ chatId: '', user: null })
+  const [chatUser, setChatUser] = useState<IChat | null>(null)
   const [users, setUsers] = useState<any[]>([])
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({})
 
   const reset = () => {
-    setChat({ chatId: '', user: null })
+    setChatUser(null)
     setUsers([])
     setMessages({})
   }
 
   const addMessages = (userId: string, messages: any[]) => {
-    //TODO set messages for each user
     setMessages((prev: any) => ({ ...prev, [userId]: messages }))
-    console.log(`userId: ${userId}`)
     console.table(messages)
   }
 
@@ -57,15 +54,14 @@ export const ChatProvider = (props: Props) => {
       ...prev,
       [userId]: [...(prev[userId] ?? []), message],
     }))
-    console.log(`userId: ${userId}`)
     console.table(messages)
   }
 
   return (
     <ChatContext.Provider
       value={{
-        chat,
-        setChat,
+        chatUser,
+        setChatUser,
         users,
         setUsers,
         addMessages,
