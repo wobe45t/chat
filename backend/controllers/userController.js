@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs')
 const User = require('../models/userModel')
 
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select(['-password', '-email'])
+  const users = await User.find().select('-password -friendRequests -friends')
   res.status(200).json(users)
 })
 
@@ -75,7 +75,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.json({
-      id: user.id,
+      _id: user._id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,

@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const { findUserSocket } = require('../utils/findUserSocket')
 const User = require('../models/userModel')
+const Conversation = require('../models/conversationModel')
 const { isObjectIdOrHexString } = require('mongoose')
 
 const addFriendInvitation = asyncHandler(async (req, res) => {
@@ -54,7 +55,7 @@ const addFriendInvitation = asyncHandler(async (req, res) => {
 const acceptFriendInvitation = asyncHandler(async (req, res) => {
   const io = req.app.get('socketio')
   const userInvited = await User.findByIdAndUpdate(
-    req.user.id,
+    req.user._id,
     {
       $pull: { friendRequests: req.params.id },
       $push: { friends: req.params.id },
@@ -76,7 +77,7 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
   const userInviting = await User.findByIdAndUpdate(
     req.params.id,
     {
-      $push: { friends: req.user.id },
+      $push: { friends: req.user._id },
     },
     { new: true }
   )
@@ -92,6 +93,10 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
     ])
     .select('-password')
 
+  Conversation.create({
+    users: [userInvited._id, userInviting._id],
+  })
+
   // const socketInvited = findUserSocket(io.of('/ws').sockets, req.user.id)
   // if (socketInvited) {
   //   io.of('/ws').to(socketInvited).emit('friend-request', { user: userInvited })
@@ -103,7 +108,7 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
       .to(socketInviting)
       .emit('friend-request', { user: userInviting })
   }
-  res.status(200).json(userInvited.toClient())
+  res.status(200).json(userInvited)
 })
 
 const declineFriendInvitation = asyncHandler(async (req, res) => {

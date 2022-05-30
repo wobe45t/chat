@@ -17,3 +17,9 @@ export interface ISignupForm extends Credentials {
   firstName: string
   lastName: string
 }
+
+export type ChatUser = {
+  _id?: string
+  firstName: string
+  lastName: string
+}

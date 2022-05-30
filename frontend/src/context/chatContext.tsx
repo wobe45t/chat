@@ -1,14 +1,12 @@
 import { createContext, useState } from 'react'
+import { useQueryClient } from 'react-query'
+import { IConversation, Message } from '../interfaces/conversation'
 
-interface IChat {
-  _id: string
-  firstName: string
-  lastName: string
-  active: boolean
-}
 interface IContext {
-  chatUser: IChat | null
-  setChatUser: Function
+  conversation: IConversation | null
+  setConversation: Function
+  conversations: IConversation[] | null
+  setConversations: Function
   users: any[]
   setUsers: Function
   addMessages: Function
@@ -18,8 +16,10 @@ interface IContext {
 }
 
 export const ChatContext = createContext<IContext>({
-  chatUser: null,
-  setChatUser: Function,
+  conversation: null,
+  setConversation: Function,
+  conversations: null,
+  setConversations: Function,
   users: [],
   setUsers: Function,
   addMessages: Function,
@@ -34,12 +34,16 @@ interface Props {
 
 export const ChatProvider = (props: Props) => {
   const { children } = props
-  const [chatUser, setChatUser] = useState<IChat | null>(null)
+  const [conversation, setConversation] = useState<IConversation | null>(null)
+  const [conversations, setConversations] = useState<IConversation[] | null>(
+    null
+  )
   const [users, setUsers] = useState<any[]>([])
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({})
 
   const reset = () => {
-    setChatUser(null)
+    setConversation(null)
+    setConversations(null)
     setUsers([])
     setMessages({})
   }
@@ -49,19 +53,27 @@ export const ChatProvider = (props: Props) => {
     console.table(messages)
   }
 
-  const appendMessage = (userId: string, message: any) => {
-    setMessages((prev: any) => ({
-      ...prev,
-      [userId]: [...(prev[userId] ?? []), message],
-    }))
-    console.table(messages)
+  const appendMessage = (data: {
+    conversationId: string
+    message: Message
+  }) => {
+    setConversation((prev: any) => {
+      if (data.conversationId === prev?._id) {
+        const prevMessages = prev?.messages?.length !== 0 ? prev.messages : []
+        prevMessages.push(data.message)
+        return { ...prev, messages: prevMessages}
+      }
+      return prev
+    })
   }
 
   return (
     <ChatContext.Provider
       value={{
-        chatUser,
-        setChatUser,
+        conversation,
+        setConversation,
+        conversations,
+        setConversations,
         users,
         setUsers,
         addMessages,

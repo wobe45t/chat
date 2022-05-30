@@ -17,6 +17,16 @@ export const getStorageUser = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 }
 
+export const getUsers = () => {
+  const token = localStorage.getItem('token')?.replaceAll('"', '')
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+  return axios.get('/api/users', config).then((response) => response.data)
+}
+
 // export const updateProfile = (profileData: IProfile) => {
 //   const token = localStorage.getItem('token')?.replaceAll('"', '')
 //   const config = {

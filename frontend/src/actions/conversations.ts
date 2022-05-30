@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export const getMessages = (user_id: string) => {
+export const getConversations = () => {
   const token = localStorage.getItem('token')?.replaceAll('"', '')
   const config = {
     headers: {
@@ -8,11 +8,11 @@ export const getMessages = (user_id: string) => {
     },
   }
   return axios
-    .get(`/api/messages/${user_id}`, config)
+    .get(`/api/conversations`, config)
     .then((response) => response.data)
 }
 
-export const addMessage = (conversation_id: string, text: string) => {
+export const getConversation = (conversation_id: string) => {
   const token = localStorage.getItem('token')?.replaceAll('"', '')
   const config = {
     headers: {
@@ -20,6 +20,6 @@ export const addMessage = (conversation_id: string, text: string) => {
     },
   }
   return axios
-    .post(`/api/messages/${conversation_id}`, { text }, config)
+    .get(`/api/conversations/${conversation_id}`, config)
     .then((response) => response.data)
 }

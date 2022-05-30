@@ -18,6 +18,7 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
+app.use('/api/conversations', require('./routes/conversationRoutes'))
 app.use('/api/friends', require('./routes/friendRoutes'))
 app.use('/api/messages', require('./routes/messagesRoutes'))
 app.use('/api/users', require('./routes/userRoutes'))
@@ -57,9 +58,6 @@ io.of('/ws').on('connection', (socket) => {
   users[socket.user._id] = socket.id
 
   // EMIT USER ACTIVE TO HIS FRIENDS
-
-  // socket.on('login', () => {
-  //   console.log('logged in')
 
   const active_friends = []
   socket.user.friends.forEach((user_id) => {
