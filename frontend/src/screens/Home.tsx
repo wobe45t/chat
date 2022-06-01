@@ -36,7 +36,7 @@ const Home = () => {
     setConversations,
     setConversation,
     appendMessage,
-    conversationUsersUpdate,
+    conversationUserUpdate,
   } = useContext(ChatContext)
   const { user } = useContext(UserContext)
   const [value, setValue] = useState('')
@@ -86,7 +86,7 @@ const Home = () => {
       console.log('')
       markReadLatestMessage(conversation._id, conversation.latest._id).then(
         (data) => {
-          conversationUsersUpdate(data)
+          conversationUserUpdate(data)
         }
       )
     } else {
@@ -155,7 +155,7 @@ const Home = () => {
                     onScroll={onScroll}
                     className='overflow-y-auto'
                   >
-                    <div className='flex flex-col p-3 gap-1 justify-starts'>
+                    <div className='flex flex-col p-3 gap-[2px] justify-starts'>
                       {conversation?.messages?.map(
                         (message: Message, index: number, arr: Message[]) => (
                           <React.Fragment key={message._id || index}>
@@ -178,7 +178,7 @@ const Home = () => {
                                 onClick={() =>
                                   console.log('Clicked message: ', message)
                                 }
-                                className={`flex flex-grow rounded-lg font-light tracking-tight px-2 py-1
+                                className={`flex flex-grow rounded-2xl font-light tracking-tight px-2 py-1
                                 ${
                                   message.user._id !== user?._id
                                     ? 'bg-gray-100'
@@ -186,41 +186,30 @@ const Home = () => {
                                 }
                                 ${
                                   arr[index + 1]?.user._id ===
-                                    message.user._id && 'rounded-b-none'
+                                    message.user._id && 'rounded-b-md'
                                 }
                                 ${
                                   arr[index - 1]?.user._id ===
-                                    message.user._id && 'rounded-t-none'
+                                    message.user._id && 'rounded-t-md'
                                 }
                                 ${
                                   arr[index - 1]?.user._id ===
                                     message.user._id &&
                                   arr[index + 1]?.user._id ===
                                     message.user._id &&
-                                  'rounded-none'
+                                  'rounded-md'
                                 }
                               `}
                               >
                                 {message.text}
                               </div>
                               <div className='flex flex-row gap-1'>
-                                <div
+                                {/* <div
                                   onClick={() => alert('reply')}
-                                  className='py-2 transition text-gray-600 hover:text-gray-200'
+                                  className='inline-block rounded-full cursor-pointer p-2 transition text-gray-600 hover:bg-gray-100'
                                 >
                                   <ReplyIcon className='w-4 h-4' />
-                                </div>
-                                <div
-                                  onClick={() =>
-                                    markReadLatestMessage(
-                                      conversation?._id,
-                                      message._id
-                                    )
-                                  }
-                                  className='py-2 transition text-gray-600 hover:text-gray-200'
-                                >
-                                  <EyeIcon className='w-4 h-4' />
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                             {message.user._id !== user?._id &&

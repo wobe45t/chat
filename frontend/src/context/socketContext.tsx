@@ -41,7 +41,7 @@ export const SocketProvider = (props: Props) => {
     setConversation,
     setConversations,
     appendMessage,
-    conversationUsersUpdate,
+    conversationUserUpdate,
   } = useContext(ChatContext)
   const { user, setUser, userRef } = useContext(UserContext)
   const reset = () => {
@@ -63,16 +63,9 @@ export const SocketProvider = (props: Props) => {
       console.log('user: ', data)
     })
 
-    newSocket.off('message').on(
-      'message',
-      (
-        data: {
-          conversationId: string
-          message: Message
-        },
-        conversation
-      ) => {
-        console.log('messages: ', data) // conversation id, message: (user, text, createdAt, _id)
+    newSocket
+      .off('message')
+      .on('message', (data: { conversationId: string; message: Message, chatUser: ChatUser }) => {
         setConversation((prev: any) => {
           if (data.conversationId === prev?._id) {
             markReadLatestMessage(data.conversationId, data.message._id)
@@ -82,6 +75,12 @@ export const SocketProvider = (props: Props) => {
               ...prev,
               messages: prevMessages.concat(data.message),
               latest: data.message,
+              users: prev.users.map((chatUser: ChatUser) => {
+                if (chatUser.user._id === data.chatUser.user?._id) {
+                  return data.chatUser
+                }
+                return chatUser
+              }),
             }
           }
           return prev
@@ -99,6 +98,9 @@ export const SocketProvider = (props: Props) => {
                     lastRead: data.message._id,
                   }
                 }
+                if (chatUser.user._id === data.chatUser.user?._id) {
+                  return data.chatUser
+                }
                 return chatUser
               })
               return { ...conversation, latest: data.message, users: newUsers }
@@ -106,8 +108,7 @@ export const SocketProvider = (props: Props) => {
             return conversation
           })
         })
-      }
-    )
+      })
 
     newSocket.off('friend-connect').on('friend-connect', (data: any) => {
       // setConversation((prev: any) => {
@@ -157,12 +158,12 @@ export const SocketProvider = (props: Props) => {
     })
 
     newSocket
-      .off('conversation-users-update')
+      .off('conversation-user-update')
       .on(
-        'conversation-users-update',
-        (data: { conversation_id: string; users: any[] }) => {
+        'conversation-user-update',
+        (data: { conversation_id: string; user: IUser }) => {
           console.warn('conversation users update received : ', data)
-          conversationUsersUpdate(data)
+          conversationUserUpdate(data)
         }
       )
 

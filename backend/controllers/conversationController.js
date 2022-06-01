@@ -81,90 +81,23 @@ const markReadLatestMessage = asyncHandler(async (req, res) => {
       select: '-password -friends -friendRequests -email -__v',
     },
   })
-  console.log('conversation after update: ', conversation)
-  // const message = await Message.aggregate(
-  //   [
-  //     {
-  //       $match: { _id: mongoose.Types.ObjectId(req.body.message_id) },
-  //     },
-  //     {
-  //       $lookup: {
-  //         from: 'users',
-  //         localField: 'user',
-  //         foreignField: '_id',
-  //         as: 'user',
-  //       },
-  //     },
-  //     {
-  //       $unwind: '$user',
-  //     },
-  //     {
-  //       $unset: ['password', 'friends', 'friendRequests', 'email', '__v'].map(
-  //         (value) => `user.${value}`
-  //       ),
-  //     },
-  //     {
-  //       $lookup: {
-  //         from: 'conversations',
-  //         localField: '_id',
-  //         foreignField: 'users.lastRead',
-  //         as: 'seenBy',
-  //       },
-  //     },
-  //     { $unwind: '$seenBy' }, //Without it filter below doesnt work
-  //     {
-  //       $set: {
-  //         seenBy: {
-  //           $map: {
-  //             input: {
-  //               $filter: {
-  //                 input: '$seenBy.users',
-  //                 as: 'u',
-  //                 cond: { $eq: ['$$u.lastRead', '$_id'] },
-  //               },
-  //             },
-  //             as: 'each',
-  //             in: '$$each.user',
-  //           },
-  //         },
-  //       },
-  //     },
-  //     {
-  //       $lookup: {
-  //         from: 'users',
-  //         foreignField: '_id',
-  //         localField: 'seenBy',
-  //         as: 'seenBy',
-  //       },
-  //     },
-  //     {
-  //       $unset: ['password', 'friends', 'friendRequests', 'email', '__v'].map(
-  //         (value) => `seenBy.${value}`
-  //       ),
-  //     },
-  //   ],
-  //   {},
-  //   (err) => {
-  //     console.log(err)
-  //   }
-  // )
+
+  const result = {
+    conversation_id: conversation._id,
+    chatUser: conversation.users.find((chatUser) =>
+      chatUser.user._id.equals(req.user._id)
+    ),
+  }
   conversation.users.forEach((convUser) => {
     if (convUser.user._id.equals(req.user._id)) return
-    console.log('convUser :', convUser.user._id)
     const socket = findUserSocket(io.of('/ws').sockets, convUser.user._id)
-    console.log(socket)
     if (socket) {
-      io.of('/ws').to(socket).emit('conversation-users-update', {
-        conversation_id: conversation._id,
-        users: conversation.users,
-      })
+      io.of('/ws').to(socket).emit('conversation-user-update', result)
     } else {
       console.warn('User not logged in')
     }
   })
-  res
-    .status(200)
-    .json({ conversation_id: conversation._id, users: conversation.users })
+  res.status(200).json(result)
 })
 
 const getConversation = asyncHandler(async (req, res) => {

@@ -124,19 +124,19 @@ const Nav = () => {
       >
         <BellIcon className='w-5 h-5' />
         <div className='w-full flex flex-row justify-between'>
-          <div>Requests</div>
+          <div>Friend invitations</div>
           {user?.friendRequests?.length !== 0 && (
             <div className='text-green-700'>{user?.friendRequests?.length}</div>
           )}
         </div>
       </div>
-      <div
+      {/* <div
         onClick={() => navigate('/profile')}
         className='border flex flex-row items-center gap-2 rounded-md px-2 py-1 cursor-pointer hover:bg-gray-700 hover:text-white'
       >
         <UserIcon className='w-5 h-5' />
         <span>Profile</span>
-      </div>
+      </div> */}
       <div
         onClick={() => {
           localStorage.removeItem('user')
@@ -238,17 +238,17 @@ const Nav = () => {
                   } else {
                     name =
                       conv.name ??
-                      `Group: ${conv.users
+                      conv.users
                         .map((chatUser: ChatUser) => chatUser.user?.firstName)
-                        .join(', ')}`
+                        .join(', ')
                   }
 
                   return (
                     <div
                       key={conv._id}
                       onClick={() => {
+                        console.log('clicked conversation: ', conv)
                         if (conversation?._id !== conv._id) {
-                          console.log('clicked conversation: ', conv)
                           setConversation(conv)
                         }
                       }}

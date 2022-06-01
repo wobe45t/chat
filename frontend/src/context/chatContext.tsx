@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState, useRef } from 'react'
 import { IConversation, Message } from '../interfaces/conversation'
+import { ChatUser } from '../interfaces/conversation'
 
 interface IContext {
   conversation: IConversation | null
@@ -11,7 +12,7 @@ interface IContext {
   setUsers: Function
   addMessages: Function
   appendMessage: Function
-  conversationUsersUpdate: Function
+  conversationUserUpdate: Function
   messages: { [key: string]: any[] }
   reset: Function
 }
@@ -26,7 +27,7 @@ export const ChatContext = createContext<IContext>({
   setUsers: Function,
   addMessages: Function,
   appendMessage: Function,
-  conversationUsersUpdate: Function,
+  conversationUserUpdate: Function,
   messages: {},
   reset: Function,
 })
@@ -44,12 +45,11 @@ export const ChatProvider = (props: Props) => {
   const [users, setUsers] = useState<any[]>([])
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({})
 
-  const conversationRef = useRef<IConversation | null>(null)
+  const conversationRef = useRef<IConversation | null>(conversation)
 
   useEffect(() => {
     conversationRef.current = conversation
   }, [conversation])
-
 
   const reset = () => {
     setConversation(null)
@@ -66,34 +66,42 @@ export const ChatProvider = (props: Props) => {
   const appendMessage = (data: {
     conversationId: string
     message: Message
-  }) => {
-  }
+  }) => {}
 
-  const conversationUsersUpdate = (data: {
+  const conversationUserUpdate = (data: {
     conversation_id: string
-    users: any[]
+    chatUser: ChatUser
   }) => {
     setConversations((prev: IConversation[] | null) => {
       if (prev === null) return null
-      const conv = prev.find(
-        (conv: IConversation) => conv._id === data.conversation_id
-      )
-      if (conv) {
-        conv.users = data.users
-        return prev.map((conversation: IConversation) => {
-          if (conv._id === conversation._id) {
-            return { ...conversation, users: data.users }
+      return prev.map((conversation: IConversation) => {
+        if (data.conversation_id === conversation._id) {
+          return {
+            ...conversation,
+            users: conversation.users.map((chatUser: ChatUser) => {
+              if (chatUser.user._id === data.chatUser.user?._id) {
+                return data.chatUser
+              }
+              return chatUser
+            }),
           }
-          return conversation
-        })
-      }
-      return prev
+        }
+        return conversation
+      })
     })
     setConversation((prev: IConversation | null) => {
       if (prev === null) return null
 
       if (prev._id === data.conversation_id) {
-        return { ...prev, users: data.users }
+        return {
+          ...prev,
+          users: prev.users.map((chatUser: ChatUser) => {
+            if (chatUser.user._id === data.chatUser.user._id) {
+              return data.chatUser
+            }
+            return chatUser
+          }),
+        }
       }
       return prev
     })
@@ -115,7 +123,7 @@ export const ChatProvider = (props: Props) => {
         setUsers,
         addMessages,
         appendMessage,
-        conversationUsersUpdate,
+        conversationUserUpdate,
         messages,
         reset,
       }}
