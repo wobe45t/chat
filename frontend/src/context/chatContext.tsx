@@ -1,9 +1,9 @@
-import { createContext, useState } from 'react'
-import { useQueryClient } from 'react-query'
+import { createContext, useEffect, useState, useRef } from 'react'
 import { IConversation, Message } from '../interfaces/conversation'
 
 interface IContext {
   conversation: IConversation | null
+  conversationRef: any
   setConversation: Function
   conversations: IConversation[] | null
   setConversations: Function
@@ -11,12 +11,14 @@ interface IContext {
   setUsers: Function
   addMessages: Function
   appendMessage: Function
+  conversationUsersUpdate: Function
   messages: { [key: string]: any[] }
   reset: Function
 }
 
 export const ChatContext = createContext<IContext>({
   conversation: null,
+  conversationRef: null,
   setConversation: Function,
   conversations: null,
   setConversations: Function,
@@ -24,6 +26,7 @@ export const ChatContext = createContext<IContext>({
   setUsers: Function,
   addMessages: Function,
   appendMessage: Function,
+  conversationUsersUpdate: Function,
   messages: {},
   reset: Function,
 })
@@ -41,6 +44,13 @@ export const ChatProvider = (props: Props) => {
   const [users, setUsers] = useState<any[]>([])
   const [messages, setMessages] = useState<{ [key: string]: any[] }>({})
 
+  const conversationRef = useRef<IConversation | null>(null)
+
+  useEffect(() => {
+    conversationRef.current = conversation
+  }, [conversation])
+
+
   const reset = () => {
     setConversation(null)
     setConversations(null)
@@ -57,20 +67,47 @@ export const ChatProvider = (props: Props) => {
     conversationId: string
     message: Message
   }) => {
-    setConversation((prev: any) => {
-      if (data.conversationId === prev?._id) {
-        const prevMessages = prev?.messages?.length !== 0 ? prev.messages : []
-        prevMessages.push(data.message)
-        return { ...prev, messages: prevMessages}
+  }
+
+  const conversationUsersUpdate = (data: {
+    conversation_id: string
+    users: any[]
+  }) => {
+    setConversations((prev: IConversation[] | null) => {
+      if (prev === null) return null
+      const conv = prev.find(
+        (conv: IConversation) => conv._id === data.conversation_id
+      )
+      if (conv) {
+        conv.users = data.users
+        return prev.map((conversation: IConversation) => {
+          if (conv._id === conversation._id) {
+            return { ...conversation, users: data.users }
+          }
+          return conversation
+        })
+      }
+      return prev
+    })
+    setConversation((prev: IConversation | null) => {
+      if (prev === null) return null
+
+      if (prev._id === data.conversation_id) {
+        return { ...prev, users: data.users }
       }
       return prev
     })
   }
 
+  useEffect(() => {
+    console.log('conversation: ', conversation)
+  }, [conversation])
+
   return (
     <ChatContext.Provider
       value={{
         conversation,
+        conversationRef,
         setConversation,
         conversations,
         setConversations,
@@ -78,6 +115,7 @@ export const ChatProvider = (props: Props) => {
         setUsers,
         addMessages,
         appendMessage,
+        conversationUsersUpdate,
         messages,
         reset,
       }}

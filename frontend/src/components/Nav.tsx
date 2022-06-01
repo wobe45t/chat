@@ -4,6 +4,7 @@ import {
   PlusIcon,
   UserIcon,
   BellIcon,
+  UserAddIcon,
   XIcon,
 } from '@heroicons/react/outline'
 import { SearchInput } from './SearchInput'
@@ -17,8 +18,10 @@ import { SocketContext } from '../context/socketContext'
 import { getUsers } from '../actions/users'
 import { MyModal } from './Modal'
 import { getConversations } from '../actions/conversations'
+import { inviteFriend, removeFriend } from '../actions/friends'
 import { IConversation } from '../interfaces/conversation'
-import { ChatUser } from '../interfaces/user'
+import { ChatUser } from '../interfaces/conversation'
+import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 dayjs.extend(relativeTime)
@@ -29,14 +32,14 @@ enum View {
 }
 
 const Nav = () => {
-  const { user } = useContext(UserContext)
+  const { user, setUser } = useContext(UserContext)
   const navigate = useNavigate()
 
   const { reset: resetSocket } = useContext(SocketContext)
 
   const {
     setConversation,
-    addMessages,
+    conversation,
     reset: resetChat,
     conversations,
     setConversations,
@@ -46,11 +49,28 @@ const Nav = () => {
   const [view, setView] = useState<View>(View.CHATS)
   const [showModal, setShowModal] = useState<boolean>(false)
 
-  const { mutate: getMessagesMutate } = useMutation(
-    (userId: string) => getMessages(userId),
+  const { mutate: inviteFriendMutate } = useMutation(
+    (userId: string) => inviteFriend(userId),
     {
-      onSuccess: (data: any[], userId: string) => {
-        addMessages(userId, data)
+      onSuccess: (data) => {
+        console.log('invite success data: ', data)
+      },
+      onError: (error: any) => {
+        console.log('invite error')
+        toast.error(error.response.data.message, { autoClose: 1000 })
+      },
+    }
+  )
+  const { mutate: removeFriendMutate } = useMutation(
+    (userId: string) => removeFriend(userId),
+    {
+      onSuccess: (data) => {
+        console.log('remove success data: ', data)
+        setUser(data)
+      },
+      onError: (error: any) => {
+        console.log('remove error')
+        toast.error(error.response.data.message, { autoClose: 1000 })
       },
     }
   )
@@ -82,7 +102,7 @@ const Nav = () => {
     <div className='p-2 flex flex-col h-full gap-2 bg-gray-50'>
       <div className='text-xl font-light tracking-tight'>
         <div>
-          {user.firstName} {user.lastName}
+          {user?.firstName} {user?.lastName}
         </div>
       </div>
       <div
@@ -92,8 +112,8 @@ const Nav = () => {
         <BellIcon className='w-5 h-5' />
         <div className='w-full flex flex-row justify-between'>
           <div>Requests</div>
-          {user.friendRequests?.length !== 0 && (
-            <div className='text-green-700'>{user.friendRequests?.length}</div>
+          {user?.friendRequests?.length !== 0 && (
+            <div className='text-green-700'>{user?.friendRequests?.length}</div>
           )}
         </div>
       </div>
@@ -149,26 +169,32 @@ const Nav = () => {
             <div>No users found</div>
           ) : (
             users
-              .filter((u: any) => u._id !== user._id)
-              .map((user: any, index: number) => (
+              .filter((u: any) => u._id !== user?._id)
+              .map((appUser: any, index: number) => (
                 <div
                   key={index}
-                  className='flex flex-row items-center gap-3 font-light text-lg tracking-tighter'
-                  onClick={() => {
-                    console.log(`select user:${JSON.stringify(user)}`)
-                    // getMessagesMutate(user._id)
-                    setConversation(user)
-                  }}
+                  className='flex flex-row items-center border rounded-md p-2 gap-3 font-light text-lg tracking-tighter bg-white'
                 >
-                  <div className='flex flex-row items-center justify-around gap-1'>
-                    {/* <div className='bg-green-500 rounded-full w-3 h-3' /> */}
-                    <div className='ml-1 flex flex-col'>
-                      <div>
-                        {user.firstName} {user.lastName}
-                      </div>
-                      <div className='text-xs tracking-tight font-light text-gray-500'>
-                        {user.email}
-                      </div>
+                  <div className='w-full ml-1 flex flex-row gap-2 justify-between items-center'>
+                    <div>
+                      {appUser.firstName} {appUser.lastName}
+                    </div>
+                    <div className='flex flex-row gap-2'>
+                      <button
+                        className='border rounded-md p-2 cursor-pointer hover:bg-gray-100 disabled:bg-green-100 disabled:border-green-200 disabled:cursor-auto'
+                        onClick={() => removeFriendMutate(appUser._id)}
+                      >
+                        <XIcon className='w-5 h-5' />
+                      </button>
+                      <button
+                        className='border rounded-md p-2 cursor-pointer hover:bg-gray-100 disabled:bg-green-100 disabled:border-green-200 disabled:cursor-auto'
+                        onClick={() => inviteFriendMutate(appUser._id)}
+                        disabled={user?.friends
+                          ?.map((u: any) => u._id)
+                          .includes(appUser._id)}
+                      >
+                        <UserAddIcon className='w-5 h-5' />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -189,48 +215,73 @@ const Nav = () => {
             </div>
             <div className='flex flex-col gap-2'>
               {conversations?.length !== 0 &&
-                conversations?.map((conversation: IConversation) => {
+                conversations?.map((conv: IConversation) => {
                   let name
-                  if (conversation.users.length === 1) {
-                    name = `${conversation.users[0].firstName} ${conversation.users[0].lastName}`
+                  if (conv.users.length === 2) {
+                    const convUser = conv.users.find(
+                      (chatUser: ChatUser) => chatUser.user._id !== user?._id
+                    )
+                    name = `${convUser?.user.firstName} ${convUser?.user.lastName}`
                   } else {
-                    console.log(conversation)
                     name =
-                      conversation.name ??
-                      `Group: ${conversation.users.reduce(
+                      conv.name ??
+                      `Group: ${conv.users.reduce(
                         (acc: string, curr: ChatUser) =>
-                          `${acc}, ${curr.firstName}`,
+                          `${acc}, ${curr.user.firstName}`,
                         ''
                       )}`
                   }
 
                   return (
                     <div
-                      key={conversation._id}
+                      key={conv._id}
                       onClick={() => {
-                        console.log('clicked conversation: ', conversation)
-                        setConversation(conversation)
+                        if (conversation?._id !== conv._id) {
+                          console.log('clicked conversation: ', conv)
+                          setConversation(conv)
+                        }
                       }}
-                      className='px-2 py-2 flex flex-col font-light tracking-tight rounded-md bg-white cursor-pointer hover:outline hover:outline-1'
+                      className={`p-2 flex flex-col font-light tracking-tight rounded-md border bg-white text-gray-700 cursor-pointer
+                            ${
+                              conv?.users?.find(
+                                (chatUser: ChatUser) =>
+                                  chatUser.user._id === user?._id
+                              )?.lastRead !== conv.latest._id &&
+                              conv.latest.user._id !== user?._id
+                                ? 'text-black font-semibold'
+                                : ''
+                            }
+                      hover:outline hover:outline-1`}
                     >
-                      <div className='flex flex-row gap-2'>
-                        <div>{name}</div>
-                        {/* {user.active && (
-                          <div className='bg-green-500 rounded-full w-3 h-3' />
-                        )} */}
-                      </div>
-                      <div className='font-light text-xs text-gray-700'>
-                        <div className='truncate w-44'>
-                          {`${
-                            conversation.latest.user._id === user._id
-                              ? 'You: '
-                              : `${conversation.latest.user.firstName}: `
-                          }${conversation.latest.text}`}{' '}
+                      <div>{name}</div>
+                      <div className='text-[10px] flex flex-col'>
+                        <div>
+                          Conv user:{' '}
+                          {
+                            conv.users.find(
+                              (chatUser: ChatUser) =>
+                                chatUser.user._id === user?._id
+                            )?.lastRead
+                          }
                         </div>
+                        <div>Conv latest: {conv.latest._id}</div>
                       </div>
-                      <div className='mt-1 self-end tracking-tighter font-light text-xs text-gray-500'>
-                        {dayjs(conversation.latest.createdAt).fromNow()}
-                      </div>
+                      {conv.latest.user && (
+                        <>
+                          <div className={`text-xs`}>
+                            <div className='truncate w-44'>
+                              {`${
+                                conv.latest.user._id === user?._id
+                                  ? 'You: '
+                                  : `${conv.latest.user.firstName}: `
+                              }${conv.latest.text}`}{' '}
+                            </div>
+                          </div>
+                          <div className='mt-1 self-end tracking-tighter font-light text-xs text-gray-500'>
+                            {dayjs(conv.latest.createdAt).fromNow()}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )
                 })}
@@ -277,7 +328,7 @@ const Nav = () => {
           )}
           <span className='text-gray-700 font-light'>Friends</span>
           <div className='flex flex-col gap-2 '>
-            {user.friends
+            {user?.friends
               ?.filter((u: any) => !newConversationUsers.includes(u))
               .map((user: any) => (
                 <div

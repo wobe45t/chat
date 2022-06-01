@@ -1,10 +1,20 @@
-import {ChatUser} from './user'
+import {IUser } from './user'
 
 export type Message = {
   _id: string
   text: string
-  user: ChatUser
+  user: IUser
   createdAt: Date
+}
+
+export type ChatUser = {
+  _id?: string
+  lastRead: string
+  user: {
+    _id: string
+    firstName: string
+    lastName: string
+  }
 }
 export interface IConversation {
   _id: string

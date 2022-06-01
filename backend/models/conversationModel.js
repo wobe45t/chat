@@ -7,11 +7,13 @@ const conversationSchema = mongoose.Schema(
     },
     users: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        read: {
-          type: Boolean,
-          default: true,
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        lastRead: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Message',
         },
       },
     ],

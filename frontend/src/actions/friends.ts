@@ -17,6 +17,20 @@ export const inviteFriend = (userId: string) => {
     .then((response) => response.data)
 }
 
+export const removeFriend = (userId: string) => {
+  const token = localStorage.getItem('token')?.replaceAll('"', '')
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+
+  return axios
+    .post(`/api/friends/remove/${userId}`, null, config)
+    .then((response) => response.data)
+}
+
+
 export const acceptFriendInvitation = (userId: string) => {
   const token = localStorage.getItem('token')?.replaceAll('"', '')
   const config = {

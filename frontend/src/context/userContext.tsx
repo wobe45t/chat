@@ -1,16 +1,18 @@
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import {IUser} from '../interfaces/user'
+import { IUser } from '../interfaces/user'
 
 export const UserContext = createContext<{
-  user: IUser
+  user: IUser | null
   setUser: Function
+  userRef: any
 }>({
   user: {
     friends: [],
-    friendRequests: []
+    friendRequests: [],
   },
   setUser: () => {},
+  userRef: null,
 })
 
 interface Props {
@@ -19,9 +21,10 @@ interface Props {
 
 export const UserProvider = (props: Props) => {
   const { children } = props
-  const [user, setUser] = useState({})
+  const [user, setUser] = useState<IUser | null>(null)
   const navigate = useNavigate()
   const [loading, setLoading] = useState<boolean>(true)
+  const userRef = useRef<IUser | null>(null)
 
   useEffect(() => {
     const rawUser = localStorage.getItem('user')
@@ -34,12 +37,16 @@ export const UserProvider = (props: Props) => {
     setLoading(false)
   }, [])
 
+  useEffect(() => {
+    userRef.current = user
+  }, [user])
+
   if (loading) {
     return <div>Loading...</div>
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, userRef }}>
       {children}
     </UserContext.Provider>
   )

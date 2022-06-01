@@ -43,36 +43,42 @@ const Notifications = () => {
   return (
     <div className='container mx-auto'>
       <div className='text-xl font-light'>Notifications</div>
-      <div className='flex flex-col gap-2'>
-        {user.friendRequests?.map((user: any, index: number) => (
-          <div
-            key={index}
-            className='flex flex-row justify-between border rouned-md px-3 py-2'
-          >
-            <div>
-              {user.firstName} {user.lastName} invited you!
-            </div>
-            <div className='flex flex-row gap-2'>
-              <div
-                className='cursor-pointer font-light tracking-tight hover:text-green-700'
-                onClick={() => {
-                  acceptFriendInvitationMutate(user._id)
-                }}
-              >
-                Accept
+      {user?.friendRequests?.length === 0 ? (
+        <div className='text-xl font-light tracking-tight'>
+          No friend notifications found
+        </div>
+      ) : (
+        <div className='flex flex-col gap-2'>
+          {user?.friendRequests?.map((user: any, index: number) => (
+            <div
+              key={index}
+              className='flex flex-row justify-between border rouned-md px-3 py-2'
+            >
+              <div>
+                {user.firstName} {user.lastName} invited you!
               </div>
-              <div
-                className='cursor-pointer font-light tracking-tight hover:text-red-700'
-                onClick={() => {
-                  declineFriendInvitationMutate(user._id)
-                }}
-              >
-                Decline
+              <div className='flex flex-row gap-2'>
+                <div
+                  className='cursor-pointer font-light tracking-tight hover:text-green-700'
+                  onClick={() => {
+                    acceptFriendInvitationMutate(user._id)
+                  }}
+                >
+                  Accept
+                </div>
+                <div
+                  className='cursor-pointer font-light tracking-tight hover:text-red-700'
+                  onClick={() => {
+                    declineFriendInvitationMutate(user._id)
+                  }}
+                >
+                  Decline
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

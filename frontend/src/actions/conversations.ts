@@ -12,6 +12,24 @@ export const getConversations = () => {
     .then((response) => response.data)
 }
 
+export const markReadLatestMessage = (
+  conversation_id: string,
+  message_id: string
+) => {
+  const token = localStorage.getItem('token')?.replaceAll('"', '')
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+  return axios
+    .put(`/api/conversations/${conversation_id}`, { message_id }, config)
+    .then((response) => {
+      console.log(response.data)
+      return response.data
+    })
+}
+
 export const getConversation = (conversation_id: string) => {
   const token = localStorage.getItem('token')?.replaceAll('"', '')
   const config = {

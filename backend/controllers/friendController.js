@@ -4,6 +4,22 @@ const User = require('../models/userModel')
 const Conversation = require('../models/conversationModel')
 const { isObjectIdOrHexString } = require('mongoose')
 
+const removeFriend = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $pop: { friends: req.params.id },
+      },
+      { new: true }
+    )
+    res.status(200).json(user)
+  } catch (error) {
+    res.status(400)
+    throw new Error(error)
+  }
+})
+
 const addFriendInvitation = asyncHandler(async (req, res) => {
   console.log('search for ', req.params.id)
   console.log('current user', req.user.id)
@@ -16,7 +32,7 @@ const addFriendInvitation = asyncHandler(async (req, res) => {
       },
     ],
   })
-  console.log('users: ', users)
+
   const io = req.app.get('socketio')
 
   if (users.length === 0) {
@@ -93,9 +109,27 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
     ])
     .select('-password')
 
-  Conversation.create({
-    users: [userInvited._id, userInviting._id],
+  const _conversation = await Conversation.create({
+    users: [{ user: userInvited._id }, { user: userInviting._id }],
   })
+  const conversation = await Conversation.aggregate([
+    { $match: { 'users.user': _conversation._id } },
+    { $unset: 'messages' },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'users.user',
+        foreignField: '_id',
+        as: 'users.user',
+      },
+    },
+    {
+      $unset: ['password', 'friends', 'friendRequests', 'email', '__v'].map(
+        (value) => `users.user.${value}`
+      ),
+    },
+  ])
+  console.log('ACCEPT FRIEND: ', conversation)
 
   // const socketInvited = findUserSocket(io.of('/ws').sockets, req.user.id)
   // if (socketInvited) {
@@ -103,10 +137,13 @@ const acceptFriendInvitation = asyncHandler(async (req, res) => {
   // }
 
   const socketInviting = findUserSocket(io.of('/ws').sockets, req.params.id)
+  const socketInvited = findUserSocket(io.of('/ws').sockets, req.user._id)
   if (socketInviting) {
     io.of('/ws')
       .to(socketInviting)
       .emit('friend-request', { user: userInviting })
+    io.of('/ws').to(socketInviting).emit('conversation-added', { conversation })
+    io.of('/ws').to(socketInvited).emit('conversation-added', { conversation })
   }
   res.status(200).json(userInvited)
 })
@@ -137,4 +174,5 @@ module.exports = {
   addFriendInvitation,
   acceptFriendInvitation,
   declineFriendInvitation,
+  removeFriend
 }
