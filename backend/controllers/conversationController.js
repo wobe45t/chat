@@ -190,9 +190,39 @@ const addGroupConversation = asyncHandler(async (req, res) => {
   res.status(200).json(conversation)
 })
 
+const leaveConversation = asyncHandler(async (req, res) => {
+  const io = req.app.get('socketio')
+  //res.params.id -- conversation id
+  const conversation = await Conversation.findOneAndUpdate(
+    {
+      _id: mongoose.Types.ObjectId(req.params.id),
+    },
+    {
+      $pull: {
+        users: {
+          user: req.user._id,
+        },
+      },
+    }
+  )
+  conversation.users.forEach((chatUser) => {
+    if (chatUser.user._id.equals(req.user._id)) return
+    const socket = findUserSocket(io.of('/ws').sockets, chatUser.user._id)
+    if (socket) {
+      io.of('/ws').to(socket).emit('conversation-user-remove', {
+        conversationId: conversation._id,
+        userId: req.user._id,
+      })
+    }
+  })
+
+  res.status(200).json({ conversationId: conversation._id })
+})
+
 module.exports = {
   getConversation,
   getConversations,
   markReadLatestMessage,
   addGroupConversation,
+  leaveConversation,
 }

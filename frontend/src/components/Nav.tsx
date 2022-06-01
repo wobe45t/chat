@@ -176,7 +176,7 @@ const Nav = () => {
           All
         </div>
       </div>
-      <div className='flex flex-col gap-2'>
+      <div className='h-full flex flex-col  gap-2'>
         {view === View.ALL ? (
           users.length === 0 ? (
             <div>No users found</div>
@@ -226,71 +226,72 @@ const Nav = () => {
                 <PlusIcon className='w-5 h-5' />
               </div>
             </div>
-            <div className='flex flex-col gap-2'>
-              {conversations?.length !== 0 &&
-                conversations?.map((conv: IConversation) => {
-                  let name
-                  if (conv.users.length === 2) {
-                    const convUser = conv.users.find(
-                      (chatUser: ChatUser) => chatUser.user._id !== user?._id
-                    )
-                    name = `${convUser?.user.firstName} ${convUser?.user.lastName}`
-                  } else {
-                    name =
-                      conv.name ??
-                      conv.users
-                        .map((chatUser: ChatUser) => chatUser.user?.firstName)
-                        .join(', ')
-                  }
-
-                  return (
-                    <div
-                      key={conv._id}
-                      onClick={() => {
-                        console.log('clicked conversation: ', conv)
-                        if (conversation?._id !== conv._id) {
-                          setConversation(conv)
-                        }
-                      }}
-                      className={`p-2 flex flex-col font-light tracking-tight rounded-md border bg-white text-gray-700 cursor-pointer
-                            ${
-                              conv?.users?.find(
-                                (chatUser: ChatUser) =>
-                                  chatUser.user._id === user?._id
-                              )?.lastRead !== conv.latest._id &&
-                              conv.latest.user._id !== user?._id
-                                ? 'text-black font-semibold'
-                                : ''
-                            }
-                      hover:outline hover:outline-1`}
-                    >
-                      <div className='flex flex-row gap-1 items-center'>
-                        {conv.users.length === 2 ? (
-                          <UserCircleIcon className='w-5 h-5' />
-                        ) : (
-                          <UserGroupIcon className='w-5 h-5' />
-                        )}
-                        <div>{name}</div>
-                      </div>
-                      {conv.latest.user && (
-                        <>
-                          <div className={`text-xs`}>
-                            <div className='truncate w-44'>
-                              {`${
-                                conv.latest.user._id === user?._id
-                                  ? 'You: '
-                                  : `${conv.latest.user.firstName}: `
-                              }${conv.latest.text}`}{' '}
+            <div className='h-full'>
+              <div className='flex flex-col gap-2'>
+                {conversations?.length !== 0 &&
+                  conversations?.map((conv: IConversation) => {
+                    let name
+                    if (conv.users.length === 2) {
+                      const convUser = conv.users.find(
+                        (chatUser: ChatUser) => chatUser.user._id !== user?._id
+                      )
+                      name = `${convUser?.user.firstName} ${convUser?.user.lastName}`
+                    } else {
+                      name =
+                        conv.name ??
+                        conv.users
+                          .map((chatUser: ChatUser) => chatUser.user?.firstName)
+                          .join(', ')
+                    }
+                    return (
+                      <div
+                        key={conv._id}
+                        onClick={() => {
+                          console.log('clicked conversation: ', conv)
+                          if (conversation?._id !== conv._id) {
+                            setConversation(conv)
+                          }
+                        }}
+                        className={`p-2 flex flex-col font-light tracking-tight rounded-md border bg-white text-gray-700 cursor-pointer
+                              ${
+                                conv?.users?.find(
+                                  (chatUser: ChatUser) =>
+                                    chatUser.user._id === user?._id
+                                )?.lastRead !== conv.latest?._id &&
+                                conv.latest?.user._id !== user?._id
+                                  ? 'text-black font-semibold'
+                                  : ''
+                              }
+                        hover:outline hover:outline-1`}
+                      >
+                        <div className='flex flex-row gap-1 items-center'>
+                          {conv.users.length === 2 ? (
+                            <UserCircleIcon className='w-5 h-5' />
+                          ) : (
+                            <UserGroupIcon className='w-5 h-5' />
+                          )}
+                          <div>{name}</div>
+                        </div>
+                        {conv.latest?.user && (
+                          <>
+                            <div className={`text-xs`}>
+                              <div className='truncate w-44'>
+                                {`${
+                                  conv.latest?.user._id === user?._id
+                                    ? 'You: '
+                                    : `${conv.latest?.user.firstName}: `
+                                }${conv.latest?.text}`}{' '}
+                              </div>
                             </div>
-                          </div>
-                          <div className='mt-1 self-end tracking-tighter font-light text-xs text-gray-500'>
-                            {dayjs(conv.latest.createdAt).fromNow()}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
+                            <div className='mt-1 self-end tracking-tighter font-light text-xs text-gray-500'>
+                              {dayjs(conv.latest?.createdAt).fromNow()}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
             </div>
           </>
         )}

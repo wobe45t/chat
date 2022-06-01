@@ -47,7 +47,7 @@ function App() {
         <UserProvider>
           <ChatProvider>
             <SocketProvider>
-              <main className='main flex w-full h-screen overflow-y-auto'>
+              <main className='main flex w-full h-screen overflow-y-hidden'>
                 <ToastContainer />
                 <Routes>
                   <Route path='/*'>

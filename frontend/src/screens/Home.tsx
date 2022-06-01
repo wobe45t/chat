@@ -15,6 +15,7 @@ import {
   ChevronRightIcon,
   EyeIcon,
   ReplyIcon,
+  DotsHorizontalIcon,
 } from '@heroicons/react/outline'
 import { useMutation, useQuery } from 'react-query'
 import { inviteFriend } from '../actions/friends'
@@ -23,6 +24,7 @@ import { addMessage } from '../actions/messages'
 import dayjs from 'dayjs'
 import {
   getConversation,
+  leaveConversation,
   markReadLatestMessage,
 } from '../actions/conversations'
 import { ChatUser, Message } from '../interfaces/conversation'
@@ -31,6 +33,7 @@ import { IConversation } from '../interfaces/conversation'
 const Home = () => {
   const socket = useSocket()
   const {
+    activeUsers,
     conversation,
     conversations,
     setConversations,
@@ -81,10 +84,10 @@ const Home = () => {
     if (
       conversation.users.find(
         (chatUser: ChatUser) => chatUser.user._id === user._id
-      )?.lastRead !== conversation.latest._id
+      )?.lastRead !== conversation.latest?._id
     ) {
       console.log('')
-      markReadLatestMessage(conversation._id, conversation.latest._id).then(
+      markReadLatestMessage(conversation._id, conversation.latest?._id).then(
         (data) => {
           conversationUserUpdate(data)
         }
@@ -109,10 +112,20 @@ const Home = () => {
       }
     }
   }
+
+  const handleLeaveConversation = () => {
+    leaveConversation(conversation?._id!).then(({ conversationId }) => {
+      console.log('leave conversation: ', conversation?._id)
+      setConversations((prev: IConversation[]) =>
+        prev.filter((conv: IConversation) => conv._id !== conversationId)
+      )
+      setConversation(null)
+    })
+  }
+
   useEffect(() => {
     chatEnd.current?.scrollIntoView()
   }, [conversation])
-
   return (
     <div className='flex w-full h-screen'>
       <div className='w-full flex flex-row border rounded-md'>
@@ -121,33 +134,31 @@ const Home = () => {
         </div>
         {conversation !== null ? (
           <div className='w-full flex flex-col'>
-            <div
-              onClick={() =>
-                alert(
-                  // JSON.stringify(
-                  //   `${conversation.latest._id}\n${conversation.users[0].lastRead}\n${conversation.users[1].lastRead}`
-                  // )
-                  JSON.stringify(`latest ${conversation?.latest}`)
-                )
-              }
-            >
-              Show conversation
-            </div>
             <div className='flex flex-col flex-grow overflow-y-auto'>
               {conversation?._id ? (
                 <>
-                  <div className='p-2 flex flex-col items-center border-b-2'>
+                  <div className='p-2 flex flex-row border-b-2 justify-between items-center'>
                     <div className='tracking-normal text-xl font-light'>
-                      {conversation.name ?? conversation.users.length === 2
-                        ? conversation?.users.find(
-                            (chatUser: ChatUser) =>
-                              chatUser.user._id === user?._id
-                          )?.user.firstName
-                        : conversation?.users
-                            .map(
-                              (chatUser: ChatUser) => chatUser.user.firstName
-                            )
-                            .join(', ')}
+                      {conversation.name ?? conversation.users.length === 2 ? (
+                        <>
+                          {
+                            conversation?.users.find(
+                              (chatUser: ChatUser) =>
+                                chatUser.user._id !== user?._id
+                            )?.user.firstName
+                          }
+                        </>
+                      ) : (
+                        conversation?.users
+                          .map((chatUser: ChatUser) => chatUser.user.firstName)
+                          .join(', ')
+                      )}
+                    </div>
+                    <div
+                      onClick={handleLeaveConversation}
+                      className='p-2 rounded-md cursor-pointer hover:bg-gray-100'
+                    >
+                      <DotsHorizontalIcon className='w-5 h-5' />
                     </div>
                   </div>
                   <div
@@ -167,49 +178,49 @@ const Home = () => {
                                 </div>
                               )}
                             <div
-                              className={`flex flex-row gap-1 w-1/3 ${
+                              className={`flex flex-row gap-1 text-sm  max-w-[80%] md:max-w-[60%] lg:max-w-[40%] ${
                                 message.user._id !== user?._id
                                   ? 'self-start'
                                   : 'self-end flex-row-reverse'
                               }
-                              `}
+                                `}
                             >
                               <div
                                 onClick={() =>
                                   console.log('Clicked message: ', message)
                                 }
-                                className={`flex flex-grow rounded-2xl font-light tracking-tight px-2 py-1
-                                ${
-                                  message.user._id !== user?._id
-                                    ? 'bg-gray-100'
-                                    : 'bg-blue-500 text-white'
-                                }
-                                ${
-                                  arr[index + 1]?.user._id ===
-                                    message.user._id && 'rounded-b-md'
-                                }
-                                ${
-                                  arr[index - 1]?.user._id ===
-                                    message.user._id && 'rounded-t-md'
-                                }
-                                ${
-                                  arr[index - 1]?.user._id ===
-                                    message.user._id &&
-                                  arr[index + 1]?.user._id ===
-                                    message.user._id &&
-                                  'rounded-md'
-                                }
-                              `}
+                                className={`flex flex-grow break-all rounded-2xl font-light tracking-tight px-2 py-1
+                                  ${
+                                    message.user._id !== user?._id
+                                      ? 'bg-gray-100'
+                                      : 'bg-blue-500 text-white'
+                                  }
+                                  ${
+                                    arr[index + 1]?.user._id ===
+                                      message.user._id && 'rounded-b-md'
+                                  }
+                                  ${
+                                    arr[index - 1]?.user._id ===
+                                      message.user._id && 'rounded-t-md'
+                                  }
+                                  ${
+                                    arr[index - 1]?.user._id ===
+                                      message.user._id &&
+                                    arr[index + 1]?.user._id ===
+                                      message.user._id &&
+                                    'rounded-md'
+                                  }
+                                `}
                               >
                                 {message.text}
                               </div>
                               <div className='flex flex-row gap-1'>
                                 {/* <div
-                                  onClick={() => alert('reply')}
-                                  className='inline-block rounded-full cursor-pointer p-2 transition text-gray-600 hover:bg-gray-100'
-                                >
-                                  <ReplyIcon className='w-4 h-4' />
-                                </div> */}
+                                    onClick={() => alert('reply')}
+                                    className='inline-block rounded-full cursor-pointer p-2 transition text-gray-600 hover:bg-gray-100'
+                                  >
+                                    <ReplyIcon className='w-4 h-4' />
+                                  </div> */}
                               </div>
                             </div>
                             {message.user._id !== user?._id &&

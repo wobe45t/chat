@@ -36,6 +36,7 @@ export const SocketProvider = (props: Props) => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [socketInitialized, setSocketInitialized] = useState<boolean>(false)
   const {
+    activeUsers,
     conversation,
     conversationRef,
     setConversation,
@@ -65,52 +66,66 @@ export const SocketProvider = (props: Props) => {
 
     newSocket
       .off('message')
-      .on('message', (data: { conversationId: string; message: Message, chatUser: ChatUser }) => {
-        setConversation((prev: any) => {
-          if (data.conversationId === prev?._id) {
-            markReadLatestMessage(data.conversationId, data.message._id)
-            const prevMessages =
-              prev?.messages?.length !== 0 ? prev.messages : []
-            return {
-              ...prev,
-              messages: prevMessages.concat(data.message),
-              latest: data.message,
-              users: prev.users.map((chatUser: ChatUser) => {
-                if (chatUser.user._id === data.chatUser.user?._id) {
-                  return data.chatUser
-                }
-                return chatUser
-              }),
-            }
-          }
-          return prev
-        })
-        setConversations((prev: IConversation[]) => {
-          return prev.map((conversation: IConversation) => {
-            if (conversation._id === data.conversationId) {
-              const newUsers = conversation.users.map((chatUser: ChatUser) => {
-                if (
-                  chatUser.user._id === userRef?.current._id &&
-                  conversationRef?.current?._id === conversation._id
-                ) {
-                  return {
-                    ...chatUser,
-                    lastRead: data.message._id,
+      .on(
+        'message',
+        (data: {
+          conversationId: string
+          message: Message
+          chatUser: ChatUser
+        }) => {
+          setConversation((prev: any) => {
+            if (data.conversationId === prev?._id) {
+              markReadLatestMessage(data.conversationId, data.message._id)
+              const prevMessages =
+                prev?.messages?.length !== 0 ? prev.messages : []
+              return {
+                ...prev,
+                messages: prevMessages.concat(data.message),
+                latest: data.message,
+                users: prev.users.map((chatUser: ChatUser) => {
+                  if (chatUser.user._id === data.chatUser.user?._id) {
+                    return data.chatUser
                   }
-                }
-                if (chatUser.user._id === data.chatUser.user?._id) {
-                  return data.chatUser
-                }
-                return chatUser
-              })
-              return { ...conversation, latest: data.message, users: newUsers }
+                  return chatUser
+                }),
+              }
             }
-            return conversation
+            return prev
           })
-        })
-      })
+          setConversations((prev: IConversation[]) => {
+            return prev.map((conversation: IConversation) => {
+              if (conversation._id === data.conversationId) {
+                const newUsers = conversation.users.map(
+                  (chatUser: ChatUser) => {
+                    if (
+                      chatUser.user._id === userRef?.current._id &&
+                      conversationRef?.current?._id === conversation._id
+                    ) {
+                      return {
+                        ...chatUser,
+                        lastRead: data.message._id,
+                      }
+                    }
+                    if (chatUser.user._id === data.chatUser.user?._id) {
+                      return data.chatUser
+                    }
+                    return chatUser
+                  }
+                )
+                return {
+                  ...conversation,
+                  latest: data.message,
+                  users: newUsers,
+                }
+              }
+              return conversation
+            })
+          })
+        }
+      )
 
     newSocket.off('friend-connect').on('friend-connect', (data: any) => {
+      activeUsers.add(data._id)
       // setConversation((prev: any) => {
       //   if (prev === null) return prev
       //   if (prev._id === data._id) {
@@ -127,6 +142,7 @@ export const SocketProvider = (props: Props) => {
       // setUser((prev: IUser) => ({ ...prev, friends: friends }))
     })
     newSocket.off('friend-disconnect').on('friend-disconnect', (data: any) => {
+      activeUsers.delete(data._id)
       // setConversation((prev: any) => {
       //   if (prev === null) return prev
       //   if (prev._id === data._id) {
@@ -145,11 +161,12 @@ export const SocketProvider = (props: Props) => {
 
     newSocket.off('active-friends').on('active-friends', (data: any[]) => {
       // This cant work - user is bound
-      const friends = user?.friends?.map((user: any) => ({
-        ...user,
-        active: data.includes(user._id),
-      }))
-      setUser((prev: IUser) => ({ ...prev, friends: friends }))
+      data.forEach((user: string) => activeUsers.add(user))
+      // const friends = user?.friends?.map((user: any) => ({
+      //   ...user,
+      //   active: data.includes(user._id),
+      // }))
+      // setUser((prev: IUser) => ({ ...prev, friends: friends }))
     })
 
     newSocket.off('friend-request').on('friend-request', (data: any) => {
@@ -168,11 +185,47 @@ export const SocketProvider = (props: Props) => {
       )
 
     newSocket
+      .off('conversation-user-remove')
+      .on(
+        'conversation-user-remove',
+        (data: { conversationId: string; userId: string }) => {
+          console.warn('conversation users delete received : ', data)
+          setConversations((prev: IConversation[]) =>
+            prev.map((conv: IConversation) => {
+              if (conv._id === data.conversationId) {
+                return {
+                  ...conv,
+                  users: conv.users.filter(
+                    (chatUser: ChatUser) => chatUser.user._id !== data.userId
+                  ),
+                }
+              }
+              return conv
+            })
+          )
+
+          setConversation((prev: IConversation) => {
+            if (prev === null) return null
+            if (prev._id === data.conversationId) {
+              return {
+                ...prev,
+                users: prev.users.filter(
+                  (chatUser: ChatUser) => chatUser.user._id !== data.userId
+                ),
+              }
+            }
+            return prev
+          })
+        }
+      )
+
+    newSocket
       .off('conversation-added')
       .on('conversation-added', (data: { conversation: IConversation }) => {
+        console.log('conversation-added: ', data)
         setConversations((prev: IConversation[]) => {
           const newConversations = prev ?? []
-          return [...prev, newConversations.concat(data.conversation)]
+          return newConversations.concat(data.conversation)
         })
       })
   }

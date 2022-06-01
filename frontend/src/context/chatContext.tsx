@@ -9,6 +9,7 @@ interface IContext {
   conversations: IConversation[] | null
   setConversations: Function
   users: any[]
+  activeUsers: Set<string>
   setUsers: Function
   addMessages: Function
   appendMessage: Function
@@ -24,6 +25,7 @@ export const ChatContext = createContext<IContext>({
   conversations: null,
   setConversations: Function,
   users: [],
+  activeUsers: new Set<string>(),
   setUsers: Function,
   addMessages: Function,
   appendMessage: Function,
@@ -119,6 +121,7 @@ export const ChatProvider = (props: Props) => {
         setConversation,
         conversations,
         setConversations,
+        activeUsers: new Set<string>(),
         users,
         setUsers,
         addMessages,

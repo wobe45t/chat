@@ -4,7 +4,8 @@ const {
   getConversations,
   getConversation,
   markReadLatestMessage,
-  addGroupConversation
+  addGroupConversation,
+  leaveConversation
 } = require('../controllers/conversationController')
 const { protect } = require('../middleware/authMiddleware')
 
@@ -13,5 +14,6 @@ router
   .route('/:id')
   .get(protect, getConversation)
   .put(protect, markReadLatestMessage)
+router.route('/leave/:id').put(protect, leaveConversation)
 
 module.exports = router

@@ -53,3 +53,15 @@ export const addGroupConversation = (userIds: string[]) => {
     .post(`/api/conversations`, { users: userIds }, config)
     .then((response) => response.data)
 }
+
+export const leaveConversation = (conversationId: string) => {
+  const token = localStorage.getItem('token')?.replaceAll('"', '')
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+  return axios
+    .put(`/api/conversations/leave/${conversationId}`, {}, config)
+    .then((response) => response.data)
+}
