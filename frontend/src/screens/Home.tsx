@@ -16,6 +16,7 @@ import {
   EyeIcon,
   ReplyIcon,
   DotsHorizontalIcon,
+  DotsCircleHorizontalIcon,
 } from '@heroicons/react/outline'
 import { useMutation, useQuery } from 'react-query'
 import { inviteFriend } from '../actions/friends'
@@ -130,9 +131,9 @@ const Home = () => {
     chatEnd.current?.scrollIntoView()
   }, [conversation])
   return (
-    <div className='flex w-full h-screen'>
-      <div className='w-full flex flex-row border rounded-md'>
-        <div>
+    <div className='flex w-full'>
+      <div className='w-full flex flex-row border'>
+        <div className=''>
           <Nav />
         </div>
         {conversation !== null ? (
@@ -299,10 +300,8 @@ const Home = () => {
               className='p-2 rounded-md cursor-pointer hover:bg-gray-200'
             >
               Leave conversation
-              </li>
-            <li
-              className='p-2 rounded-md cursor-pointer hover:bg-gray-200'
-            >
+            </li>
+            <li className='p-2 rounded-md cursor-pointer hover:bg-gray-200'>
               Edit users
             </li>
           </ul>

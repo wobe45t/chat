@@ -1,4 +1,6 @@
 # Chat app
 `work in progress `
 
-Chat application built with socket.io
+- group conversations
+- seen / unseen messages (messenger like)
+  
