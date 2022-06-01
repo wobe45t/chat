@@ -41,3 +41,15 @@ export const getConversation = (conversation_id: string) => {
     .get(`/api/conversations/${conversation_id}`, config)
     .then((response) => response.data)
 }
+
+export const addGroupConversation = (userIds: string[]) => {
+  const token = localStorage.getItem('token')?.replaceAll('"', '')
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+  return axios
+    .post(`/api/conversations`, { users: userIds }, config)
+    .then((response) => response.data)
+}

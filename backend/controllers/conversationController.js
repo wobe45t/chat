@@ -230,14 +230,15 @@ const getConversation = asyncHandler(async (req, res) => {
 const addGroupConversation = asyncHandler(async (req, res) => {
   const io = req.app.get('socketio')
 
-  // if (!req.body.text) {
-  //   res.status(400)
-  //   throw new Error('No mesasge found')
-  // }
-
-  const conversation = await Conversation.create({
+  const _conversation = await Conversation.create({
     name: req.body.name,
-    users: req.body.users,
+    users: req.body.users
+      .map((userId) => ({ user: userId }))
+      .concat({ user: req.user._id }),
+  })
+  const conversation = await Conversation.findById(_conversation._id).populate({
+    path: 'users',
+    populate: { path: 'user', select: '-password -friends -friendRequests' },
   })
 
   if (!conversation) {
@@ -245,21 +246,20 @@ const addGroupConversation = asyncHandler(async (req, res) => {
     throw new Error('Coulnt create conversation')
   }
 
-  conversation.users.forEach((user) => {
-    if (user._id === req.user._id) return
-    const socket = findUserSocket(io.of('/ws').sockets, user._id)
+  conversation.users.forEach((chatUser) => {
+    if (chatUser.user._id.equals(req.user._id)) return
+    const socket = findUserSocket(io.of('/ws').sockets, chatUser.user._id)
     if (socket) {
-      io.of('/ws').to(socket).emit('conversation-created', conversation)
-    } else {
-      console.warn('User not logged in')
+      io.of('/ws').to(socket).emit('conversation-added', { conversation })
     }
   })
 
-  res.status(200).json(msg)
+  res.status(200).json(conversation)
 })
 
 module.exports = {
   getConversation,
   getConversations,
   markReadLatestMessage,
+  addGroupConversation,
 }

@@ -6,6 +6,8 @@ import {
   BellIcon,
   UserAddIcon,
   XIcon,
+  UserCircleIcon,
+  UserGroupIcon,
 } from '@heroicons/react/outline'
 import { SearchInput } from './SearchInput'
 import { UserContext } from '../context/userContext'
@@ -17,13 +19,18 @@ import { useMutation, useQuery } from 'react-query'
 import { SocketContext } from '../context/socketContext'
 import { getUsers } from '../actions/users'
 import { MyModal } from './Modal'
-import { getConversations } from '../actions/conversations'
+import { IUser } from '../interfaces/user'
+import {
+  addGroupConversation,
+  getConversations,
+} from '../actions/conversations'
 import { inviteFriend, removeFriend } from '../actions/friends'
 import { IConversation } from '../interfaces/conversation'
 import { ChatUser } from '../interfaces/conversation'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { isFunctionOrConstructorTypeNode } from 'typescript'
 dayjs.extend(relativeTime)
 
 enum View {
@@ -92,10 +99,16 @@ const Nav = () => {
     }
   }, [view])
 
-  const [newConversationUsers, setNewConversationUsers] = useState<any[]>([])
+  const [newConversationUsers, setNewConversationUsers] = useState<IUser[]>([])
 
   const createNewConversation = () => {
-    console.log('create new conversation: ', newConversationUsers)
+    addGroupConversation(newConversationUsers.map((u: IUser) => u._id!)).then(
+      (conv: IConversation) => {
+        if (conv?._id) {
+          setConversations((prev: IConversation[]) => prev.concat(conv))
+        }
+      }
+    )
   }
 
   return (
@@ -225,11 +238,9 @@ const Nav = () => {
                   } else {
                     name =
                       conv.name ??
-                      `Group: ${conv.users.reduce(
-                        (acc: string, curr: ChatUser) =>
-                          `${acc}, ${curr.user.firstName}`,
-                        ''
-                      )}`
+                      `Group: ${conv.users
+                        .map((chatUser: ChatUser) => chatUser.user?.firstName)
+                        .join(', ')}`
                   }
 
                   return (
@@ -253,18 +264,13 @@ const Nav = () => {
                             }
                       hover:outline hover:outline-1`}
                     >
-                      <div>{name}</div>
-                      <div className='text-[10px] flex flex-col'>
-                        <div>
-                          Conv user:{' '}
-                          {
-                            conv.users.find(
-                              (chatUser: ChatUser) =>
-                                chatUser.user._id === user?._id
-                            )?.lastRead
-                          }
-                        </div>
-                        <div>Conv latest: {conv.latest._id}</div>
+                      <div className='flex flex-row gap-1 items-center'>
+                        {conv.users.length === 2 ? (
+                          <UserCircleIcon className='w-5 h-5' />
+                        ) : (
+                          <UserGroupIcon className='w-5 h-5' />
+                        )}
+                        <div>{name}</div>
                       </div>
                       {conv.latest.user && (
                         <>
@@ -312,8 +318,8 @@ const Nav = () => {
                 </span>
                 <div
                   onClick={() => {
-                    setNewConversationUsers((prev: any[]) =>
-                      prev.filter((u: any) => u._id !== user._id)
+                    setNewConversationUsers((prev: IUser[]) =>
+                      prev.filter((u: IUser) => u._id !== user._id)
                     )
                   }}
                   className='border rounded-md p-1 cursor-pointer hover:bg-gray-100'
@@ -341,7 +347,10 @@ const Nav = () => {
                   </span>
                   <div
                     onClick={() => {
-                      setNewConversationUsers((prev: any[]) => [...prev, user])
+                      setNewConversationUsers((prev: IUser[]) => [
+                        ...prev,
+                        user,
+                      ])
                     }}
                     className='border rounded-md p-1 cursor-pointer hover:bg-gray-100'
                   >

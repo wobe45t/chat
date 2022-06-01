@@ -139,19 +139,15 @@ const Home = () => {
                   <div className='p-2 flex flex-col items-center border-b-2'>
                     <div className='tracking-normal text-xl font-light'>
                       {conversation.name ?? conversation.users.length === 2
-                        ? conversation?.users.reduce(
-                            (acc, curr) =>
-                              `${acc}${
-                                curr.user._id !== user?._id
-                                  ? ` ${curr.user.firstName} ${curr.user.lastName}`
-                                  : ''
-                              }`,
-                            ''
-                          )
-                        : conversation?.users.reduce(
-                            (acc, curr) => `${acc}${curr.user.firstName}`,
-                            ''
-                          )}
+                        ? conversation?.users.find(
+                            (chatUser: ChatUser) =>
+                              chatUser.user._id === user?._id
+                          )?.user.firstName
+                        : conversation?.users
+                            .map(
+                              (chatUser: ChatUser) => chatUser.user.firstName
+                            )
+                            .join(', ')}
                     </div>
                   </div>
                   <div
