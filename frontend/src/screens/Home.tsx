@@ -46,6 +46,9 @@ const Home = () => {
   const chatEnd = useRef<HTMLDivElement>(null)
   const messageContainer = useRef<HTMLDivElement>(null)
 
+  const [showConversationMenu, setShowConversationMenu] =
+    useState<boolean>(false)
+
   const { mutate: addMessageMutate } = useMutation(
     (args: { conversation_id: string; text: string }) =>
       addMessage(args.conversation_id, args.text),
@@ -155,7 +158,7 @@ const Home = () => {
                       )}
                     </div>
                     <div
-                      onClick={handleLeaveConversation}
+                      onClick={() => setShowConversationMenu((prev) => !prev)}
                       className='p-2 rounded-md cursor-pointer hover:bg-gray-100'
                     >
                       <DotsHorizontalIcon className='w-5 h-5' />
@@ -287,6 +290,24 @@ const Home = () => {
           <div className='' />
         )}
       </div>
+      {showConversationMenu && (
+        <div className='w-1/5 p-1 flex flex-col'>
+          <div className='font-light text-xl text-center'>Menu</div>
+          <ul className=''>
+            <li
+              onClick={handleLeaveConversation}
+              className='p-2 rounded-md cursor-pointer hover:bg-gray-200'
+            >
+              Leave conversation
+              </li>
+            <li
+              className='p-2 rounded-md cursor-pointer hover:bg-gray-200'
+            >
+              Edit users
+            </li>
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
