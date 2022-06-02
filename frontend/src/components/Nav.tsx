@@ -176,7 +176,7 @@ const Nav = () => {
           All
         </div>
       </div>
-      <div className='h-full flex flex-col gap-2'>
+      <div className='h-full overflow-y-auto flex flex-col gap-2'>
         {view === View.ALL ? (
           users.length === 0 ? (
             <div>No users found</div>
@@ -215,7 +215,7 @@ const Nav = () => {
           )
         ) : (
           <div className='flex flex-col'>
-            <div className='flex flex-row gap-2 items-center justify-between'>
+            <div className='my-1 flex flex-row gap-2 items-center justify-between'>
               <span className='font-light tracking-tight text-lg'>
                 Conversations
               </span>
@@ -226,7 +226,7 @@ const Nav = () => {
                 <PlusIcon className='w-5 h-5' />
               </div>
             </div>
-            <div className='max-h-[90%] flex flex-col flex-grow gap-2 overflow-y-scroll'>
+            <div className=' flex flex-col flex-grow gap-2'>
               {conversations?.length !== 0 &&
                 conversations?.map((conv: IConversation) => {
                   let name
@@ -291,7 +291,7 @@ const Nav = () => {
                   )
                 })}
             </div>
-            <div className='flex bg-red-100'/>
+            <div className='flex bg-red-100' />
           </div>
         )}
       </div>

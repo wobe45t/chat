@@ -131,69 +131,65 @@ const Home = () => {
     chatEnd.current?.scrollIntoView()
   }, [conversation])
   return (
-    <div className='flex w-full'>
-      <div className='w-full flex flex-row border'>
-        <div className=''>
-          <Nav />
-        </div>
-        {conversation !== null ? (
-          <div className='w-full flex flex-col'>
-            <div className='flex flex-col flex-grow overflow-y-auto'>
-              {conversation?._id ? (
-                <>
-                  <div className='p-2 flex flex-row border-b-2 justify-between items-center'>
-                    <div className='tracking-normal text-xl font-light'>
-                      {conversation.name ?? conversation.users.length === 2 ? (
-                        <>
-                          {
-                            conversation?.users.find(
-                              (chatUser: ChatUser) =>
-                                chatUser.user._id !== user?._id
-                            )?.user.firstName
-                          }
-                        </>
-                      ) : (
-                        conversation?.users
-                          .map((chatUser: ChatUser) => chatUser.user.firstName)
-                          .join(', ')
-                      )}
-                    </div>
-                    <div
-                      onClick={() => setShowConversationMenu((prev) => !prev)}
-                      className='p-2 rounded-md cursor-pointer hover:bg-gray-100'
-                    >
-                      <DotsHorizontalIcon className='w-5 h-5' />
-                    </div>
+    <div className='h-full flex flex-row w-full'>
+      <Nav />
+      {conversation !== null ? (
+        <div className='w-full flex flex-col'>
+          <div className='flex flex-col flex-grow overflow-y-auto'>
+            {conversation?._id ? (
+              <>
+                <div className='p-2 flex flex-row border-b-2 justify-between items-center'>
+                  <div className='tracking-normal text-xl font-light'>
+                    {conversation.name ?? conversation.users.length === 2 ? (
+                      <>
+                        {
+                          conversation?.users.find(
+                            (chatUser: ChatUser) =>
+                              chatUser.user._id !== user?._id
+                          )?.user.firstName
+                        }
+                      </>
+                    ) : (
+                      conversation?.users
+                        .map((chatUser: ChatUser) => chatUser.user.firstName)
+                        .join(', ')
+                    )}
                   </div>
                   <div
-                    ref={messageContainer}
-                    onScroll={onScroll}
-                    className='overflow-y-auto'
+                    onClick={() => setShowConversationMenu((prev) => !prev)}
+                    className='p-2 rounded-md cursor-pointer hover:bg-gray-100'
                   >
-                    <div className='flex flex-col p-3 gap-[2px] justify-starts'>
-                      {conversation?.messages?.map(
-                        (message: Message, index: number, arr: Message[]) => (
-                          <React.Fragment key={message._id || index}>
-                            {message.user._id !== user?._id &&
-                              arr[index - 1]?.user._id !==
-                                message?.user._id && (
-                                <div className='ml-1 text-xs font-light tracking-tight'>
-                                  <span>{message.user?.firstName}</span>
-                                </div>
-                              )}
-                            <div
-                              className={`flex flex-row gap-1 text-sm  max-w-[80%] md:max-w-[60%] lg:max-w-[40%] ${
-                                message.user._id !== user?._id
-                                  ? 'self-start'
-                                  : 'self-end flex-row-reverse'
-                              }
+                    <DotsHorizontalIcon className='w-5 h-5' />
+                  </div>
+                </div>
+                <div
+                  ref={messageContainer}
+                  onScroll={onScroll}
+                  className='overflow-y-auto'
+                >
+                  <div className='flex flex-col p-3 gap-[2px] justify-starts'>
+                    {conversation?.messages?.map(
+                      (message: Message, index: number, arr: Message[]) => (
+                        <React.Fragment key={message._id || index}>
+                          {message.user._id !== user?._id &&
+                            arr[index - 1]?.user._id !== message?.user._id && (
+                              <div className='ml-1 text-xs font-light tracking-tight'>
+                                <span>{message.user?.firstName}</span>
+                              </div>
+                            )}
+                          <div
+                            className={`flex flex-row gap-1 text-sm  max-w-[80%] md:max-w-[60%] lg:max-w-[40%] ${
+                              message.user._id !== user?._id
+                                ? 'self-start'
+                                : 'self-end flex-row-reverse'
+                            }
                                 `}
-                            >
-                              <div
-                                onClick={() =>
-                                  console.log('Clicked message: ', message)
-                                }
-                                className={`flex flex-grow break-all rounded-2xl font-light tracking-tight px-2 py-1
+                          >
+                            <div
+                              onClick={() =>
+                                console.log('Clicked message: ', message)
+                              }
+                              className={`flex flex-grow break-all rounded-2xl font-light tracking-tight px-2 py-1
                                   ${
                                     message.user._id !== user?._id
                                       ? 'bg-gray-100'
@@ -215,82 +211,80 @@ const Home = () => {
                                     'rounded-md'
                                   }
                                 `}
-                              >
-                                {message.text}
-                              </div>
-                              <div className='flex flex-row gap-1'>
-                                {/* <div
+                            >
+                              {message.text}
+                            </div>
+                            <div className='flex flex-row gap-1'>
+                              {/* <div
                                     onClick={() => alert('reply')}
                                     className='inline-block rounded-full cursor-pointer p-2 transition text-gray-600 hover:bg-gray-100'
                                   >
                                     <ReplyIcon className='w-4 h-4' />
                                   </div> */}
+                            </div>
+                          </div>
+                          {message.user._id !== user?._id &&
+                            arr[index + 1]?.user._id !== message?.user._id && (
+                              <div className='ml-1 text-xs font-light tracking-tight text-gray-500'>
+                                <span>
+                                  {dayjs(message?.createdAt).fromNow()}
+                                </span>
                               </div>
-                            </div>
-                            {message.user._id !== user?._id &&
-                              arr[index + 1]?.user._id !==
-                                message?.user._id && (
-                                <div className='ml-1 text-xs font-light tracking-tight text-gray-500'>
-                                  <span>
-                                    {dayjs(message?.createdAt).fromNow()}
-                                  </span>
-                                </div>
-                              )}
-                            <div className='flex flex-row gap-1 font-light text-xs self-end'>
-                              {conversation.users.reduce(
-                                (acc, curr) =>
-                                  `${acc}${
-                                    curr.lastRead === message._id &&
-                                    curr.user._id !== user?._id &&
-                                    message.user._id !== curr.user._id
-                                      ? ` ${curr.user.firstName}`
-                                      : ''
-                                  }`,
-                                ''
-                              )}
-                            </div>
-                          </React.Fragment>
-                        )
-                      )}
-                      <div ref={chatEnd} />
-                    </div>
+                            )}
+                          <div className='flex flex-row gap-1 font-light text-xs self-end'>
+                            {conversation.users.reduce(
+                              (acc, curr) =>
+                                `${acc}${
+                                  curr.lastRead === message._id &&
+                                  curr.user._id !== user?._id &&
+                                  message.user._id !== curr.user._id
+                                    ? ` ${curr.user.firstName}`
+                                    : ''
+                                }`,
+                              ''
+                            )}
+                          </div>
+                        </React.Fragment>
+                      )
+                    )}
+                    <div ref={chatEnd} />
                   </div>
-                </>
-              ) : (
-                <div className='font-light text-xl text-center'>
-                  Select user to chat with!
                 </div>
-              )}
-            </div>
-            <form
-              className='w-full border-t flex flex-row items-center p-2 gap-2'
-              onSubmit={submitForm}
-            >
-              <button
-                onClick={() => alert('add image')}
-                className='border p-2 rounded-md my-2 transition duration-150 hover:bg-gray-100'
-              >
-                <PlusIcon className='w-5 h-5' />
-              </button>
-              <input
-                className='w-full h-10 border px-2 py-1 rounded-md'
-                value={value}
-                onChange={(e) => {
-                  setValue(e.currentTarget.value)
-                }}
-              />
-              <button
-                className='border p-2 rounded-md my-2 transition duration-150 hover:bg-gray-100'
-                type='submit'
-              >
-                <ChevronRightIcon className='w-5 h-5' />
-              </button>
-            </form>
+              </>
+            ) : (
+              <div className='font-light text-xl text-center'>
+                Select user to chat with!
+              </div>
+            )}
           </div>
-        ) : (
-          <div className='' />
-        )}
-      </div>
+          <form
+            className='w-full border-t flex flex-row items-center p-2 gap-2'
+            onSubmit={submitForm}
+          >
+            <button
+              onClick={() => alert('add image')}
+              className='border p-2 rounded-md my-2 transition duration-150 hover:bg-gray-100'
+            >
+              <PlusIcon className='w-5 h-5' />
+            </button>
+            <input
+              className='w-full h-10 border px-2 py-1 rounded-md'
+              value={value}
+              onChange={(e) => {
+                setValue(e.currentTarget.value)
+              }}
+            />
+            <button
+              className='border p-2 rounded-md my-2 transition duration-150 hover:bg-gray-100'
+              type='submit'
+            >
+              <ChevronRightIcon className='w-5 h-5' />
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className='' />
+      )}
       {showConversationMenu && (
         <div className='w-1/5 p-1 flex flex-col'>
           <div className='font-light text-xl text-center'>Menu</div>

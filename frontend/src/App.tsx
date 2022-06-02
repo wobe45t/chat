@@ -47,7 +47,7 @@ function App() {
         <UserProvider>
           <ChatProvider>
             <SocketProvider>
-              <main className='w-full'>
+              <main className='w-full h-screen'>
                 <ToastContainer />
                 <Routes>
                   <Route path='/*'>
@@ -63,7 +63,6 @@ function App() {
           </ChatProvider>
         </UserProvider>
       </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )
 }
